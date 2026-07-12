@@ -25,6 +25,7 @@ public sealed class MainForm : Form
     private readonly AppSettings _settings;
     private FileSystemWatcher? _watcher;
     private string? _currentCsvPath;
+    private string _savedInputFolder = string.Empty;
     private List<Feature> _currentFeatures = [];
 
     public MainForm()
@@ -43,6 +44,7 @@ public sealed class MainForm : Form
         _inputFolderTextBox.Text = _settings.InputFolder;
         _outputFolderTextBox.Text = _settings.OutputFolder;
         _usbFolderTextBox.Text = _settings.UsbFolder;
+        _savedInputFolder = _settings.InputFolder;
 
         _refreshTimer.Interval = 350;
         _refreshTimer.Tick += (_, _) =>
@@ -184,7 +186,15 @@ public sealed class MainForm : Form
         };
 
         textBox.Dock = DockStyle.Fill;
-        textBox.ReadOnly = true;
+        textBox.Leave += (_, _) => SaveFolderSettingsFromTextBoxes();
+        textBox.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode != Keys.Enter)
+                return;
+
+            e.SuppressKeyPress = true;
+            SaveFolderSettingsFromTextBoxes();
+        };
 
         button.Text = buttonText;
         button.Dock = DockStyle.Fill;
@@ -245,11 +255,28 @@ public sealed class MainForm : Form
 
     private void SaveSettings()
     {
-        _settings.InputFolder = _inputFolderTextBox.Text;
-        _settings.OutputFolder = _outputFolderTextBox.Text;
-        _settings.UsbFolder = _usbFolderTextBox.Text;
+        _settings.InputFolder = _inputFolderTextBox.Text.Trim();
+        _settings.OutputFolder = _outputFolderTextBox.Text.Trim();
+        _settings.UsbFolder = _usbFolderTextBox.Text.Trim();
         _settings.MirrorAboutYAxis = _mirrorCheckBox.Checked;
         _settings.Save();
+        _savedInputFolder = _settings.InputFolder;
+    }
+
+    private void SaveFolderSettingsFromTextBoxes()
+    {
+        var previousInputFolder = _savedInputFolder;
+        SaveSettings();
+
+        _inputFolderTextBox.Text = _settings.InputFolder;
+        _outputFolderTextBox.Text = _settings.OutputFolder;
+        _usbFolderTextBox.Text = _settings.UsbFolder;
+
+        if (string.Equals(previousInputFolder, _settings.InputFolder, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        LoadCsvFileList(_settings.InputFolder);
+        StartWatching(_settings.InputFolder);
     }
 
     private void StartWatching(string folder)
