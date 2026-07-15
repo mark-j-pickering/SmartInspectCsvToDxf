@@ -15,6 +15,7 @@ public sealed class MainForm : Form
     private readonly ListBox _fileListBox = new();
     private readonly PreviewPanel _previewPanel = new();
     private readonly CheckBox _mirrorCheckBox = new();
+    private readonly CheckBox _showTextCheckBox = new();
     private readonly Button _exportButton = new();
     private readonly Button _exportUsbButton = new();
     private readonly Button _refreshButton = new();
@@ -137,12 +138,18 @@ public sealed class MainForm : Form
 
         _mirrorCheckBox.Text = "Mirror about Y axis";
         _mirrorCheckBox.Dock = DockStyle.Left;
-        _mirrorCheckBox.Width = 185;
+        _mirrorCheckBox.Width = 165;
         _mirrorCheckBox.CheckedChanged += (_, _) =>
         {
             RefreshPreview();
             SaveSettings();
         };
+
+        _showTextCheckBox.Text = "Show Text";
+        _showTextCheckBox.Dock = DockStyle.Left;
+        _showTextCheckBox.Width = 100;
+        _showTextCheckBox.Checked = true;
+        _showTextCheckBox.CheckedChanged += (_, _) => RefreshPreview();
 
         _exportUsbButton.Text = "Write to USB";
         _exportUsbButton.Dock = DockStyle.Right;
@@ -158,6 +165,7 @@ public sealed class MainForm : Form
 
         bottomControls.Controls.Add(_exportUsbButton);
         bottomControls.Controls.Add(_exportButton);
+        bottomControls.Controls.Add(_showTextCheckBox);
         bottomControls.Controls.Add(_mirrorCheckBox);
 
         _previewPanel.Dock = DockStyle.Fill;
@@ -399,7 +407,7 @@ public sealed class MainForm : Form
         {
             _currentCsvPath = null;
             _currentFeatures = [];
-            _previewPanel.SetFeatures([], _mirrorCheckBox.Checked);
+            _previewPanel.SetFeatures([], _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
             UpdateExportButtons();
             _statusLabel.Text = "Failed to load CSV";
             if (showErrors)
@@ -409,7 +417,7 @@ public sealed class MainForm : Form
 
     private void RefreshPreview()
     {
-        _previewPanel.SetFeatures(_currentFeatures, _mirrorCheckBox.Checked);
+        _previewPanel.SetFeatures(_currentFeatures, _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
     }
 
     private void UpdateExportButtons()

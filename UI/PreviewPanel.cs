@@ -6,6 +6,7 @@ public sealed class PreviewPanel : Panel
 {
     private List<Feature> _features = [];
     private bool _mirrorAboutYAxis;
+    private bool _showText = true;
 
     public PreviewPanel()
     {
@@ -14,10 +15,11 @@ public sealed class PreviewPanel : Panel
         ResizeRedraw = true;
     }
 
-    public void SetFeatures(IEnumerable<Feature> features, bool mirrorAboutYAxis)
+    public void SetFeatures(IEnumerable<Feature> features, bool mirrorAboutYAxis, bool showText)
     {
         _features = features.ToList();
         _mirrorAboutYAxis = mirrorAboutYAxis;
+        _showText = showText;
         Invalidate();
     }
 
@@ -80,8 +82,11 @@ public sealed class PreviewPanel : Panel
             g.DrawEllipse(circlePen, centre.X - r, centre.Y - r, r * 2, r * 2);
             g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
 
-            var offset = Math.Max(r * 0.08f, 4f);
-            g.DrawString(f.Name, Font, textBrush, centre.X + offset, centre.Y - offset - Font.Height);
+            if (_showText)
+            {
+                var offset = Math.Max(r * 0.08f, 4f);
+                g.DrawString(f.Name, Font, textBrush, centre.X + offset, centre.Y - offset - Font.Height);
+            }
         }
 
         using var footerBrush = new SolidBrush(Color.DimGray);
