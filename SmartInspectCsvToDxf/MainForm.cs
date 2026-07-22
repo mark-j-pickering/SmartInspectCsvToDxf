@@ -119,7 +119,13 @@ public sealed class MainForm : Form
         filesHeaderPanel.Controls.Add(_refreshButton);
 
         _fileListBox.Dock = DockStyle.Fill;
-        _fileListBox.SelectedIndexChanged += (_, _) => LoadSelectedCsv();
+        _fileListBox.SelectionMode = SelectionMode.MultiExtended;
+        _fileListBox.SelectedIndexChanged += (_, _) =>
+        {
+            LoadSelectedCsv();
+            UpdateExportButtons();
+        };
+        new ToolTip().SetToolTip(_fileListBox, "Ctrl+Click or Shift+Click to select multiple files for batch export");
 
         leftPanel.Controls.Add(_fileListBox);
         leftPanel.Controls.Add(filesHeaderPanel);
@@ -153,13 +159,13 @@ public sealed class MainForm : Form
 
         _exportUsbButton.Text = "Write to USB";
         _exportUsbButton.Dock = DockStyle.Right;
-        _exportUsbButton.Width = 120;
+        _exportUsbButton.Width = 140;
         _exportUsbButton.Enabled = false;
         _exportUsbButton.Click += (_, _) => ExportDxfToConfiguredFolder(_usbFolderTextBox.Text, "USB");
 
         _exportButton.Text = "Export DXF";
         _exportButton.Dock = DockStyle.Right;
-        _exportButton.Width = 120;
+        _exportButton.Width = 140;
         _exportButton.Enabled = false;
         _exportButton.Click += (_, _) => ExportDxfToConfiguredFolder(_outputFolderTextBox.Text, "DXF output");
 
@@ -422,14 +428,17 @@ public sealed class MainForm : Form
 
     private void UpdateExportButtons()
     {
-        var canExport = _currentCsvPath is not null && _currentFeatures.Count > 0;
-        _exportButton.Enabled = canExport;
-        _exportUsbButton.Enabled = canExport;
+        var count = _fileListBox.SelectedItems.Count;
+        _exportButton.Enabled = count > 0;
+        _exportUsbButton.Enabled = count > 0;
+        _exportButton.Text = count > 1 ? $"Export DXF ({count})" : "Export DXF";
+        _exportUsbButton.Text = count > 1 ? $"Write to USB ({count})" : "Write to USB";
     }
 
     private void ExportDxfToConfiguredFolder(string folder, string targetName)
     {
-        if (_currentCsvPath is null || _currentFeatures.Count == 0)
+        var items = _fileListBox.SelectedItems.Cast<CsvFileItem>().ToList();
+        if (items.Count == 0)
             return;
 
         if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
@@ -438,24 +447,62 @@ public sealed class MainForm : Form
             return;
         }
 
-        var outputPath = BuildOutputPath(folder);
+        var exported = new List<string>();
+        var failures = new List<(string File, string Error)>();
 
-        try
+        foreach (var item in items)
         {
-            DxfExporter.Export(outputPath, _currentFeatures, _mirrorCheckBox.Checked);
-            _statusLabel.Text = $"Exported {Path.GetFileName(outputPath)} to {targetName}";
-            MessageBox.Show(this, $"DXF exported successfully:\n\n{outputPath}", "Export complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                var features = CsvFeatureReader.Read(item.FullPath);
+                if (features.Count == 0)
+                {
+                    failures.Add((Path.GetFileName(item.FullPath), "No valid features found"));
+                    continue;
+                }
+
+                var outputPath = BuildOutputPath(folder, item.FullPath);
+                DxfExporter.Export(outputPath, features, _mirrorCheckBox.Checked);
+                exported.Add(Path.GetFileName(outputPath));
+            }
+            catch (Exception ex)
+            {
+                failures.Add((Path.GetFileName(item.FullPath), ex.Message));
+            }
         }
-        catch (Exception ex)
+
+        _statusLabel.Text = failures.Count == 0
+            ? $"Exported {exported.Count} file(s) to {targetName}"
+            : $"Exported {exported.Count} of {items.Count} file(s) to {targetName} ({failures.Count} failed)";
+
+        var summary = new System.Text.StringBuilder();
+        if (exported.Count > 0)
         {
-            _statusLabel.Text = "DXF export failed";
-            MessageBox.Show(this, ex.Message, "DXF export error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            summary.AppendLine($"Exported {exported.Count} file(s):");
+            summary.AppendLine(string.Join(Environment.NewLine, exported));
         }
+
+        if (failures.Count > 0)
+        {
+            if (summary.Length > 0)
+                summary.AppendLine();
+
+            summary.AppendLine($"Failed ({failures.Count}):");
+            foreach (var (file, error) in failures)
+                summary.AppendLine($"{file}: {error}");
+        }
+
+        MessageBox.Show(
+            this,
+            summary.ToString().TrimEnd(),
+            failures.Count == 0 ? "Export complete" : "Export completed with errors",
+            MessageBoxButtons.OK,
+            failures.Count == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
-    private string BuildOutputPath(string folder)
+    private string BuildOutputPath(string folder, string csvPath)
     {
-        var defaultName = Path.GetFileNameWithoutExtension(_currentCsvPath) ?? "features";
+        var defaultName = Path.GetFileNameWithoutExtension(csvPath) ?? "features";
         if (_mirrorCheckBox.Checked)
             defaultName += "_mirrored_y";
 
