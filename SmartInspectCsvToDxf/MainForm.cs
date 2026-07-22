@@ -1,28 +1,10 @@
 using SmartInspectCsvToDxf.Models;
 using SmartInspectCsvToDxf.Services;
-using SmartInspectCsvToDxf.UI;
 
 namespace SmartInspectCsvToDxf;
 
-public sealed class MainForm : Form
+public sealed partial class MainForm : Form
 {
-    private readonly TextBox _inputFolderTextBox = new();
-    private readonly TextBox _outputFolderTextBox = new();
-    private readonly TextBox _usbFolderTextBox = new();
-    private readonly Button _browseInputButton = new();
-    private readonly Button _browseOutputButton = new();
-    private readonly Button _browseUsbButton = new();
-    private readonly ListBox _fileListBox = new();
-    private readonly PreviewPanel _previewPanel = new();
-    private readonly CheckBox _mirrorCheckBox = new();
-    private readonly CheckBox _showTextCheckBox = new();
-    private readonly Button _exportButton = new();
-    private readonly Button _exportUsbButton = new();
-    private readonly Button _refreshButton = new();
-    private readonly StatusStrip _statusStrip = new();
-    private readonly ToolStripStatusLabel _statusLabel = new();
-    private readonly System.Windows.Forms.Timer _refreshTimer = new();
-
     private readonly AppSettings _settings;
     private FileSystemWatcher? _watcher;
     private string? _currentCsvPath;
@@ -31,29 +13,15 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
+        InitializeComponent();
+
         _settings = AppSettings.Load();
-
-        Text = "SmartInspect CSV to DXF";
-        Width = 1220;
-        Height = 820;
-        MinimumSize = new Size(980, 640);
-        StartPosition = FormStartPosition.CenterScreen;
-
-        BuildUi();
 
         _mirrorCheckBox.Checked = _settings.MirrorAboutYAxis;
         _inputFolderTextBox.Text = _settings.InputFolder;
         _outputFolderTextBox.Text = _settings.OutputFolder;
         _usbFolderTextBox.Text = _settings.UsbFolder;
         _savedInputFolder = _settings.InputFolder;
-
-        _refreshTimer.Interval = 350;
-        _refreshTimer.Tick += (_, _) =>
-        {
-            _refreshTimer.Stop();
-            RefreshCsvFileListPreserveSelection();
-            ReloadCurrentCsvIfStillPresent();
-        };
 
         if (Directory.Exists(_settings.InputFolder))
         {
@@ -69,157 +37,45 @@ public sealed class MainForm : Form
         base.OnFormClosing(e);
     }
 
-    private void BuildUi()
+    private void RefreshTimer_Tick(object? sender, EventArgs e)
     {
-        var topPanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            Height = 104,
-            Padding = new Padding(8),
-            ColumnCount = 3,
-            RowCount = 3
-        };
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 115));
-        topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-
-        AddFolderRow(topPanel, 0, "CSV folder:", _inputFolderTextBox, _browseInputButton, "Browse...", () => BrowseForInputFolder());
-        AddFolderRow(topPanel, 1, "DXF folder:", _outputFolderTextBox, _browseOutputButton, "Browse...", () => BrowseForOutputFolder());
-        AddFolderRow(topPanel, 2, "USB folder:", _usbFolderTextBox, _browseUsbButton, "Browse...", () => BrowseForUsbFolder());
-
-        var split = new SplitContainer
-        {
-            Dock = DockStyle.Fill,
-            SplitterDistance = 250,
-            FixedPanel = FixedPanel.Panel1
-        };
-
-        var leftPanel = new Panel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(8)
-        };
-
-        var filesHeaderPanel = new Panel { Dock = DockStyle.Top, Height = 30 };
-        var filesLabel = new Label
-        {
-            Text = "CSV Files",
-            Dock = DockStyle.Fill,
-            Font = new Font(Font, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft
-        };
-        _refreshButton.Text = "Refresh";
-        _refreshButton.Dock = DockStyle.Right;
-        _refreshButton.Width = 78;
-        _refreshButton.Click += (_, _) => RefreshCsvFileListPreserveSelection();
-        filesHeaderPanel.Controls.Add(filesLabel);
-        filesHeaderPanel.Controls.Add(_refreshButton);
-
-        _fileListBox.Dock = DockStyle.Fill;
-        _fileListBox.SelectionMode = SelectionMode.MultiExtended;
-        _fileListBox.SelectedIndexChanged += (_, _) =>
-        {
-            LoadSelectedCsv();
-            UpdateExportButtons();
-        };
-        new ToolTip().SetToolTip(_fileListBox, "Ctrl+Click or Shift+Click to select multiple files for batch export");
-
-        leftPanel.Controls.Add(_fileListBox);
-        leftPanel.Controls.Add(filesHeaderPanel);
-
-        var rightPanel = new Panel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(8)
-        };
-
-        var bottomControls = new Panel
-        {
-            Dock = DockStyle.Bottom,
-            Height = 52
-        };
-
-        _mirrorCheckBox.Text = "Mirror about Y axis";
-        _mirrorCheckBox.Dock = DockStyle.Left;
-        _mirrorCheckBox.Width = 165;
-        _mirrorCheckBox.CheckedChanged += (_, _) =>
-        {
-            RefreshPreview();
-            SaveSettings();
-        };
-
-        _showTextCheckBox.Text = "Show Text";
-        _showTextCheckBox.Dock = DockStyle.Left;
-        _showTextCheckBox.Width = 100;
-        _showTextCheckBox.Checked = true;
-        _showTextCheckBox.CheckedChanged += (_, _) => RefreshPreview();
-
-        _exportUsbButton.Text = "Write to USB";
-        _exportUsbButton.Dock = DockStyle.Right;
-        _exportUsbButton.Width = 140;
-        _exportUsbButton.Enabled = false;
-        _exportUsbButton.Click += (_, _) => ExportDxfToConfiguredFolder(_usbFolderTextBox.Text, "USB");
-
-        _exportButton.Text = "Export DXF";
-        _exportButton.Dock = DockStyle.Right;
-        _exportButton.Width = 140;
-        _exportButton.Enabled = false;
-        _exportButton.Click += (_, _) => ExportDxfToConfiguredFolder(_outputFolderTextBox.Text, "DXF output");
-
-        bottomControls.Controls.Add(_exportUsbButton);
-        bottomControls.Controls.Add(_exportButton);
-        bottomControls.Controls.Add(_showTextCheckBox);
-        bottomControls.Controls.Add(_mirrorCheckBox);
-
-        _previewPanel.Dock = DockStyle.Fill;
-
-        rightPanel.Controls.Add(_previewPanel);
-        rightPanel.Controls.Add(bottomControls);
-
-        split.Panel1.Controls.Add(leftPanel);
-        split.Panel2.Controls.Add(rightPanel);
-
-        _statusStrip.Items.Add(_statusLabel);
-        _statusLabel.Text = "Ready";
-
-        Controls.Add(split);
-        Controls.Add(topPanel);
-        Controls.Add(_statusStrip);
+        _refreshTimer.Stop();
+        RefreshCsvFileListPreserveSelection();
+        ReloadCurrentCsvIfStillPresent();
     }
 
-    private void AddFolderRow(TableLayoutPanel panel, int row, string labelText, TextBox textBox, Button button, string buttonText, Action browseAction)
+    private void FileListBox_SelectedIndexChanged(object? sender, EventArgs e)
     {
-        var label = new Label
-        {
-            Text = labelText,
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft
-        };
-
-        textBox.Dock = DockStyle.Fill;
-        textBox.Leave += (_, _) => SaveFolderSettingsFromTextBoxes();
-        textBox.KeyDown += (_, e) =>
-        {
-            if (e.KeyCode != Keys.Enter)
-                return;
-
-            e.SuppressKeyPress = true;
-            SaveFolderSettingsFromTextBoxes();
-        };
-
-        button.Text = buttonText;
-        button.Dock = DockStyle.Fill;
-        button.Click += (_, _) => browseAction();
-
-        panel.Controls.Add(label, 0, row);
-        panel.Controls.Add(textBox, 1, row);
-        panel.Controls.Add(button, 2, row);
+        LoadSelectedCsv();
+        UpdateExportButtons();
     }
 
-    private void BrowseForInputFolder()
+    private void RefreshButton_Click(object? sender, EventArgs e) => RefreshCsvFileListPreserveSelection();
+
+    private void MirrorCheckBox_CheckedChanged(object? sender, EventArgs e)
+    {
+        RefreshPreview();
+        SaveSettings();
+    }
+
+    private void ShowTextCheckBox_CheckedChanged(object? sender, EventArgs e) => RefreshPreview();
+
+    private void ExportUsbButton_Click(object? sender, EventArgs e) => ExportDxfToConfiguredFolder(_usbFolderTextBox.Text, "USB");
+
+    private void ExportButton_Click(object? sender, EventArgs e) => ExportDxfToConfiguredFolder(_outputFolderTextBox.Text, "DXF output");
+
+    private void FolderTextBox_Leave(object? sender, EventArgs e) => SaveFolderSettingsFromTextBoxes();
+
+    private void FolderTextBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Enter)
+            return;
+
+        e.SuppressKeyPress = true;
+        SaveFolderSettingsFromTextBoxes();
+    }
+
+    private void BrowseInputButton_Click(object? sender, EventArgs e)
     {
         var selected = BrowseForFolder("Select folder containing SmartInspect CSV files", _inputFolderTextBox.Text);
         if (selected is null)
@@ -235,7 +91,7 @@ public sealed class MainForm : Form
         StartWatching(selected);
     }
 
-    private void BrowseForOutputFolder()
+    private void BrowseOutputButton_Click(object? sender, EventArgs e)
     {
         var selected = BrowseForFolder("Select default DXF output folder", _outputFolderTextBox.Text);
         if (selected is null)
@@ -245,7 +101,7 @@ public sealed class MainForm : Form
         SaveSettings();
     }
 
-    private void BrowseForUsbFolder()
+    private void BrowseUsbButton_Click(object? sender, EventArgs e)
     {
         var selected = BrowseForFolder("Select USB/export folder", _usbFolderTextBox.Text);
         if (selected is null)

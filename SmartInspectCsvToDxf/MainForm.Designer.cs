@@ -1,0 +1,413 @@
+using SmartInspectCsvToDxf.UI;
+
+#nullable disable
+
+namespace SmartInspectCsvToDxf;
+
+partial class MainForm
+{
+    /// <summary>
+    /// Required designer variable.
+    /// </summary>
+    private System.ComponentModel.IContainer components = null;
+
+    /// <summary>
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && (components != null))
+        {
+            components.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    #region Windows Form Designer generated code
+
+    /// <summary>
+    /// Required method for Designer support - do not modify
+    /// the contents of this method with the code editor.
+    /// </summary>
+    private void InitializeComponent()
+    {
+        components = new System.ComponentModel.Container();
+        _topPanel = new TableLayoutPanel();
+        _csvFolderLabel = new Label();
+        _inputFolderTextBox = new TextBox();
+        _browseInputButton = new Button();
+        _dxfFolderLabel = new Label();
+        _outputFolderTextBox = new TextBox();
+        _browseOutputButton = new Button();
+        _usbFolderLabel = new Label();
+        _usbFolderTextBox = new TextBox();
+        _browseUsbButton = new Button();
+        _splitContainer = new SplitContainer();
+        _leftPanel = new Panel();
+        _fileListBox = new ListBox();
+        _filesHeaderPanel = new Panel();
+        _filesLabel = new Label();
+        _refreshButton = new Button();
+        _rightPanel = new Panel();
+        _previewPanel = new PreviewPanel();
+        _bottomControlsPanel = new Panel();
+        _exportUsbButton = new Button();
+        _exportButton = new Button();
+        _showTextCheckBox = new CheckBox();
+        _mirrorCheckBox = new CheckBox();
+        _statusStrip = new StatusStrip();
+        _statusLabel = new ToolStripStatusLabel();
+        _refreshTimer = new System.Windows.Forms.Timer(components);
+        _fileListToolTip = new ToolTip(components);
+        _topPanel.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)_splitContainer).BeginInit();
+        _splitContainer.Panel1.SuspendLayout();
+        _splitContainer.Panel2.SuspendLayout();
+        _splitContainer.SuspendLayout();
+        _leftPanel.SuspendLayout();
+        _filesHeaderPanel.SuspendLayout();
+        _rightPanel.SuspendLayout();
+        _bottomControlsPanel.SuspendLayout();
+        _statusStrip.SuspendLayout();
+        SuspendLayout();
+        // 
+        // _topPanel
+        // 
+        _topPanel.ColumnCount = 3;
+        _topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
+        _topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        _topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 115F));
+        _topPanel.Controls.Add(_csvFolderLabel, 0, 0);
+        _topPanel.Controls.Add(_inputFolderTextBox, 1, 0);
+        _topPanel.Controls.Add(_browseInputButton, 2, 0);
+        _topPanel.Controls.Add(_dxfFolderLabel, 0, 1);
+        _topPanel.Controls.Add(_outputFolderTextBox, 1, 1);
+        _topPanel.Controls.Add(_browseOutputButton, 2, 1);
+        _topPanel.Controls.Add(_usbFolderLabel, 0, 2);
+        _topPanel.Controls.Add(_usbFolderTextBox, 1, 2);
+        _topPanel.Controls.Add(_browseUsbButton, 2, 2);
+        _topPanel.Dock = DockStyle.Top;
+        _topPanel.Location = new Point(0, 0);
+        _topPanel.Name = "_topPanel";
+        _topPanel.Padding = new Padding(8);
+        _topPanel.RowCount = 3;
+        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+        _topPanel.Size = new Size(1204, 104);
+        _topPanel.TabIndex = 1;
+        // 
+        // _csvFolderLabel
+        // 
+        _csvFolderLabel.Dock = DockStyle.Fill;
+        _csvFolderLabel.Location = new Point(11, 8);
+        _csvFolderLabel.Name = "_csvFolderLabel";
+        _csvFolderLabel.Size = new Size(84, 30);
+        _csvFolderLabel.TabIndex = 0;
+        _csvFolderLabel.Text = "CSV folder:";
+        _csvFolderLabel.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // _inputFolderTextBox
+        // 
+        _inputFolderTextBox.Dock = DockStyle.Fill;
+        _inputFolderTextBox.Location = new Point(101, 11);
+        _inputFolderTextBox.Name = "_inputFolderTextBox";
+        _inputFolderTextBox.Size = new Size(977, 23);
+        _inputFolderTextBox.TabIndex = 1;
+        _inputFolderTextBox.KeyDown += FolderTextBox_KeyDown;
+        _inputFolderTextBox.Leave += FolderTextBox_Leave;
+        // 
+        // _browseInputButton
+        // 
+        _browseInputButton.Dock = DockStyle.Fill;
+        _browseInputButton.Location = new Point(1084, 11);
+        _browseInputButton.Name = "_browseInputButton";
+        _browseInputButton.Size = new Size(109, 24);
+        _browseInputButton.TabIndex = 2;
+        _browseInputButton.Text = "Browse...";
+        _browseInputButton.Click += BrowseInputButton_Click;
+        // 
+        // _dxfFolderLabel
+        // 
+        _dxfFolderLabel.Dock = DockStyle.Fill;
+        _dxfFolderLabel.Location = new Point(11, 38);
+        _dxfFolderLabel.Name = "_dxfFolderLabel";
+        _dxfFolderLabel.Size = new Size(84, 30);
+        _dxfFolderLabel.TabIndex = 3;
+        _dxfFolderLabel.Text = "DXF folder:";
+        _dxfFolderLabel.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // _outputFolderTextBox
+        // 
+        _outputFolderTextBox.Dock = DockStyle.Fill;
+        _outputFolderTextBox.Location = new Point(101, 41);
+        _outputFolderTextBox.Name = "_outputFolderTextBox";
+        _outputFolderTextBox.Size = new Size(977, 23);
+        _outputFolderTextBox.TabIndex = 4;
+        _outputFolderTextBox.KeyDown += FolderTextBox_KeyDown;
+        _outputFolderTextBox.Leave += FolderTextBox_Leave;
+        // 
+        // _browseOutputButton
+        // 
+        _browseOutputButton.Dock = DockStyle.Fill;
+        _browseOutputButton.Location = new Point(1084, 41);
+        _browseOutputButton.Name = "_browseOutputButton";
+        _browseOutputButton.Size = new Size(109, 24);
+        _browseOutputButton.TabIndex = 5;
+        _browseOutputButton.Text = "Browse...";
+        _browseOutputButton.Click += BrowseOutputButton_Click;
+        // 
+        // _usbFolderLabel
+        // 
+        _usbFolderLabel.Dock = DockStyle.Fill;
+        _usbFolderLabel.Location = new Point(11, 68);
+        _usbFolderLabel.Name = "_usbFolderLabel";
+        _usbFolderLabel.Size = new Size(84, 30);
+        _usbFolderLabel.TabIndex = 6;
+        _usbFolderLabel.Text = "USB folder:";
+        _usbFolderLabel.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // _usbFolderTextBox
+        // 
+        _usbFolderTextBox.Dock = DockStyle.Fill;
+        _usbFolderTextBox.Location = new Point(101, 71);
+        _usbFolderTextBox.Name = "_usbFolderTextBox";
+        _usbFolderTextBox.Size = new Size(977, 23);
+        _usbFolderTextBox.TabIndex = 7;
+        _usbFolderTextBox.KeyDown += FolderTextBox_KeyDown;
+        _usbFolderTextBox.Leave += FolderTextBox_Leave;
+        // 
+        // _browseUsbButton
+        // 
+        _browseUsbButton.Dock = DockStyle.Fill;
+        _browseUsbButton.Location = new Point(1084, 71);
+        _browseUsbButton.Name = "_browseUsbButton";
+        _browseUsbButton.Size = new Size(109, 24);
+        _browseUsbButton.TabIndex = 8;
+        _browseUsbButton.Text = "Browse...";
+        _browseUsbButton.Click += BrowseUsbButton_Click;
+        // 
+        // _splitContainer
+        // 
+        _splitContainer.Dock = DockStyle.Fill;
+        _splitContainer.FixedPanel = FixedPanel.Panel1;
+        _splitContainer.Location = new Point(0, 104);
+        _splitContainer.Name = "_splitContainer";
+        // 
+        // _splitContainer.Panel1
+        // 
+        _splitContainer.Panel1.Controls.Add(_leftPanel);
+        // 
+        // _splitContainer.Panel2
+        // 
+        _splitContainer.Panel2.Controls.Add(_rightPanel);
+        _splitContainer.Size = new Size(1204, 655);
+        _splitContainer.SplitterDistance = 250;
+        _splitContainer.TabIndex = 0;
+        // 
+        // _leftPanel
+        // 
+        _leftPanel.Controls.Add(_fileListBox);
+        _leftPanel.Controls.Add(_filesHeaderPanel);
+        _leftPanel.Dock = DockStyle.Fill;
+        _leftPanel.Location = new Point(0, 0);
+        _leftPanel.Name = "_leftPanel";
+        _leftPanel.Padding = new Padding(8);
+        _leftPanel.Size = new Size(250, 655);
+        _leftPanel.TabIndex = 0;
+        // 
+        // _fileListBox
+        // 
+        _fileListBox.Dock = DockStyle.Fill;
+        _fileListBox.ItemHeight = 15;
+        _fileListBox.Location = new Point(8, 38);
+        _fileListBox.Name = "_fileListBox";
+        _fileListBox.SelectionMode = SelectionMode.MultiExtended;
+        _fileListBox.Size = new Size(234, 609);
+        _fileListBox.TabIndex = 0;
+        _fileListToolTip.SetToolTip(_fileListBox, "Ctrl+Click or Shift+Click to select multiple files for batch export");
+        _fileListBox.SelectedIndexChanged += FileListBox_SelectedIndexChanged;
+        // 
+        // _filesHeaderPanel
+        // 
+        _filesHeaderPanel.Controls.Add(_filesLabel);
+        _filesHeaderPanel.Controls.Add(_refreshButton);
+        _filesHeaderPanel.Dock = DockStyle.Top;
+        _filesHeaderPanel.Location = new Point(8, 8);
+        _filesHeaderPanel.Name = "_filesHeaderPanel";
+        _filesHeaderPanel.Size = new Size(234, 30);
+        _filesHeaderPanel.TabIndex = 1;
+        // 
+        // _filesLabel
+        // 
+        _filesLabel.Dock = DockStyle.Fill;
+        _filesLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _filesLabel.Location = new Point(0, 0);
+        _filesLabel.Name = "_filesLabel";
+        _filesLabel.Size = new Size(156, 30);
+        _filesLabel.TabIndex = 0;
+        _filesLabel.Text = "CSV Files";
+        _filesLabel.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // _refreshButton
+        // 
+        _refreshButton.Dock = DockStyle.Right;
+        _refreshButton.Location = new Point(156, 0);
+        _refreshButton.Name = "_refreshButton";
+        _refreshButton.Size = new Size(78, 30);
+        _refreshButton.TabIndex = 1;
+        _refreshButton.Text = "Refresh";
+        _refreshButton.Click += RefreshButton_Click;
+        // 
+        // _rightPanel
+        // 
+        _rightPanel.Controls.Add(_previewPanel);
+        _rightPanel.Controls.Add(_bottomControlsPanel);
+        _rightPanel.Dock = DockStyle.Fill;
+        _rightPanel.Location = new Point(0, 0);
+        _rightPanel.Name = "_rightPanel";
+        _rightPanel.Padding = new Padding(8);
+        _rightPanel.Size = new Size(950, 655);
+        _rightPanel.TabIndex = 0;
+        // 
+        // _previewPanel
+        // 
+        _previewPanel.BackColor = Color.White;
+        _previewPanel.Dock = DockStyle.Fill;
+        _previewPanel.Location = new Point(8, 8);
+        _previewPanel.Name = "_previewPanel";
+        _previewPanel.Size = new Size(934, 587);
+        _previewPanel.TabIndex = 0;
+        // 
+        // _bottomControlsPanel
+        // 
+        _bottomControlsPanel.Controls.Add(_exportUsbButton);
+        _bottomControlsPanel.Controls.Add(_exportButton);
+        _bottomControlsPanel.Controls.Add(_showTextCheckBox);
+        _bottomControlsPanel.Controls.Add(_mirrorCheckBox);
+        _bottomControlsPanel.Dock = DockStyle.Bottom;
+        _bottomControlsPanel.Location = new Point(8, 595);
+        _bottomControlsPanel.Name = "_bottomControlsPanel";
+        _bottomControlsPanel.Size = new Size(934, 52);
+        _bottomControlsPanel.TabIndex = 1;
+        // 
+        // _exportUsbButton
+        // 
+        _exportUsbButton.Dock = DockStyle.Right;
+        _exportUsbButton.Enabled = false;
+        _exportUsbButton.Location = new Point(654, 0);
+        _exportUsbButton.Name = "_exportUsbButton";
+        _exportUsbButton.Size = new Size(140, 52);
+        _exportUsbButton.TabIndex = 0;
+        _exportUsbButton.Text = "Write to USB";
+        _exportUsbButton.Click += ExportUsbButton_Click;
+        // 
+        // _exportButton
+        // 
+        _exportButton.Dock = DockStyle.Right;
+        _exportButton.Enabled = false;
+        _exportButton.Location = new Point(794, 0);
+        _exportButton.Name = "_exportButton";
+        _exportButton.Size = new Size(140, 52);
+        _exportButton.TabIndex = 1;
+        _exportButton.Text = "Export DXF";
+        _exportButton.Click += ExportButton_Click;
+        // 
+        // _showTextCheckBox
+        // 
+        _showTextCheckBox.Checked = true;
+        _showTextCheckBox.CheckState = CheckState.Checked;
+        _showTextCheckBox.Dock = DockStyle.Left;
+        _showTextCheckBox.Location = new Point(165, 0);
+        _showTextCheckBox.Name = "_showTextCheckBox";
+        _showTextCheckBox.Size = new Size(100, 52);
+        _showTextCheckBox.TabIndex = 2;
+        _showTextCheckBox.Text = "Show Text";
+        _showTextCheckBox.CheckedChanged += ShowTextCheckBox_CheckedChanged;
+        // 
+        // _mirrorCheckBox
+        // 
+        _mirrorCheckBox.Dock = DockStyle.Left;
+        _mirrorCheckBox.Location = new Point(0, 0);
+        _mirrorCheckBox.Name = "_mirrorCheckBox";
+        _mirrorCheckBox.Size = new Size(165, 52);
+        _mirrorCheckBox.TabIndex = 3;
+        _mirrorCheckBox.Text = "Mirror about Y axis";
+        _mirrorCheckBox.CheckedChanged += MirrorCheckBox_CheckedChanged;
+        // 
+        // _statusStrip
+        // 
+        _statusStrip.Items.AddRange(new ToolStripItem[] { _statusLabel });
+        _statusStrip.Location = new Point(0, 759);
+        _statusStrip.Name = "_statusStrip";
+        _statusStrip.Size = new Size(1204, 22);
+        _statusStrip.TabIndex = 2;
+        // 
+        // _statusLabel
+        // 
+        _statusLabel.Name = "_statusLabel";
+        _statusLabel.Size = new Size(39, 17);
+        _statusLabel.Text = "Ready";
+        // 
+        // _refreshTimer
+        // 
+        _refreshTimer.Interval = 350;
+        _refreshTimer.Tick += RefreshTimer_Tick;
+        // 
+        // MainForm
+        // 
+        ClientSize = new Size(1204, 781);
+        Controls.Add(_splitContainer);
+        Controls.Add(_topPanel);
+        Controls.Add(_statusStrip);
+        MinimumSize = new Size(980, 640);
+        Name = "MainForm";
+        StartPosition = FormStartPosition.CenterScreen;
+        Text = "SmartInspect CSV to DXF";
+        _topPanel.ResumeLayout(false);
+        _topPanel.PerformLayout();
+        _splitContainer.Panel1.ResumeLayout(false);
+        _splitContainer.Panel2.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)_splitContainer).EndInit();
+        _splitContainer.ResumeLayout(false);
+        _leftPanel.ResumeLayout(false);
+        _filesHeaderPanel.ResumeLayout(false);
+        _rightPanel.ResumeLayout(false);
+        _bottomControlsPanel.ResumeLayout(false);
+        _statusStrip.ResumeLayout(false);
+        _statusStrip.PerformLayout();
+        ResumeLayout(false);
+        PerformLayout();
+    }
+
+    #endregion
+
+    private TableLayoutPanel _topPanel;
+    private Label _csvFolderLabel;
+    private TextBox _inputFolderTextBox;
+    private Button _browseInputButton;
+    private Label _dxfFolderLabel;
+    private TextBox _outputFolderTextBox;
+    private Button _browseOutputButton;
+    private Label _usbFolderLabel;
+    private TextBox _usbFolderTextBox;
+    private Button _browseUsbButton;
+    private SplitContainer _splitContainer;
+    private Panel _leftPanel;
+    private Panel _filesHeaderPanel;
+    private Label _filesLabel;
+    private Button _refreshButton;
+    private ListBox _fileListBox;
+    private Panel _rightPanel;
+    private PreviewPanel _previewPanel;
+    private Panel _bottomControlsPanel;
+    private CheckBox _mirrorCheckBox;
+    private CheckBox _showTextCheckBox;
+    private Button _exportButton;
+    private Button _exportUsbButton;
+    private StatusStrip _statusStrip;
+    private ToolStripStatusLabel _statusLabel;
+    private System.Windows.Forms.Timer _refreshTimer;
+    private ToolTip _fileListToolTip;
+}
