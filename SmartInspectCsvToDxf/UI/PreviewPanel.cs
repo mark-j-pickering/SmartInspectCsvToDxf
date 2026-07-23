@@ -4,6 +4,9 @@ namespace SmartInspectCsvToDxf.UI;
 
 public sealed class PreviewPanel : Panel
 {
+    private const string BackgroundResourceName = "SmartInspectCsvToDxf.Resources.BUM_logo_background.png";
+    private static readonly Image EmbeddedBackgroundImage = LoadEmbeddedBackgroundImage();
+
     private List<Feature> _features = [];
     private bool _mirrorAboutYAxis;
     private bool _showText = true;
@@ -13,6 +16,14 @@ public sealed class PreviewPanel : Panel
         DoubleBuffered = true;
         BackColor = Color.White;
         ResizeRedraw = true;
+    }
+
+    private static Image LoadEmbeddedBackgroundImage()
+    {
+        var assembly = typeof(PreviewPanel).Assembly;
+        using var stream = assembly.GetManifestResourceStream(BackgroundResourceName)
+            ?? throw new InvalidOperationException($"Embedded resource '{BackgroundResourceName}' not found.");
+        return Image.FromStream(stream);
     }
 
     public void SetFeatures(IEnumerable<Feature> features, bool mirrorAboutYAxis, bool showText)
@@ -29,6 +40,7 @@ public sealed class PreviewPanel : Panel
         var g = e.Graphics;
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         g.Clear(BackColor);
+        DrawEmbeddedBackgroundImage(g);
 
         using var borderPen = new Pen(Color.Gainsboro, 1);
         g.DrawRectangle(borderPen, 0, 0, Width - 1, Height - 1);
@@ -36,7 +48,7 @@ public sealed class PreviewPanel : Panel
         if (_features.Count == 0)
         {
             using var brush = new SolidBrush(Color.DimGray);
-            g.DrawString("Select a CSV file to preview", Font, brush, new PointF(16, 16));
+            g.DrawString("Select a report file to preview", Font, brush, new PointF(16, 16));
             return;
         }
 
@@ -94,6 +106,18 @@ public sealed class PreviewPanel : Panel
         if (_mirrorAboutYAxis)
             footer += " | mirrored about Y axis";
         g.DrawString(footer, Font, footerBrush, new PointF(8, Height - Font.Height - 8));
+    }
+
+    private void DrawEmbeddedBackgroundImage(Graphics g)
+    {
+        const float sizeBoost = 1.1f;
+        var scale = Math.Min((float)Width / EmbeddedBackgroundImage.Width, (float)Height / EmbeddedBackgroundImage.Height) * sizeBoost;
+        var drawWidth = EmbeddedBackgroundImage.Width * scale;
+        var drawHeight = EmbeddedBackgroundImage.Height * scale;
+        var x = (Width - drawWidth) / 2f;
+        var y = (Height - drawHeight) / 2f;
+
+        g.DrawImage(EmbeddedBackgroundImage, x, y, drawWidth, drawHeight);
     }
 
     private void DrawAxes(Graphics g, Func<double, double, PointF> toScreen, Pen axisPen)
