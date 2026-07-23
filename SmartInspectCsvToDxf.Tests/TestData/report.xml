@@ -1,0 +1,1710 @@
+<reportData xmlns="http://www.faro.com/CAM2/ReportingEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" logoFilePath="C:\ProgramData\FARO Technologies\InTouch\Applications\CAM2\11.88.168\DevExReport\logo.png" companyName="FARO Technologies Inc." companyHeaderDetail01="125 Technology Park" companyHeaderDetail02="FL 32746" companyHeaderDetail03="Lake Mary" companyHeaderDetail04="USA" companyHeaderDetail05="http://www.faro.com" companyHeaderDetail06="support@faro.com" companyHeaderDetail07="(407) 333-9911">
+  <part name="" reportOrder="100001">
+    <session name="" reportOrder="200001" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\CADPictures\ReportCadPicture.jpg">
+      <sessioninfo>
+        <displayinfo invariantName="ProgramNameDocProp" name="Program Name" reportOrder="300000">
+        </displayinfo>
+        <displayinfo invariantName="FcdFileNameDocProp" name="File Name" reportOrder="300001">8HP-JAGUAR-GEARBOX-TO-BELLHOUSING-mark.fcd</displayinfo>
+        <displayinfo invariantName="PartNameDocProp" name="Part Name" reportOrder="300002">
+        </displayinfo>
+        <displayinfo invariantName="SessionNameDocProp" name="Session Name" reportOrder="300003">
+        </displayinfo>
+        <displayinfo invariantName="NoteDocProp" name="Note" reportOrder="300004">
+        </displayinfo>
+        <displayinfo invariantName="OperatorDocProp" name="Operator" reportOrder="300005">Mark Pickering</displayinfo>
+        <displayinfo invariantName="CompanyNameProp" name="Company Name" reportOrder="300006">
+        </displayinfo>
+        <displayinfo invariantName="AddressProp" name="Address" reportOrder="300007">
+        </displayinfo>
+        <displayinfo invariantName="TelephoneProp" name="Telephone No." reportOrder="300008">
+        </displayinfo>
+        <displayinfo invariantName="EmailProp" name="Email Address" reportOrder="300009">
+        </displayinfo>
+        <displayinfo invariantName="DateProp" name="Date" reportOrder="300010">7/23/2026</displayinfo>
+        <displayinfo invariantName="TimeProp" name="Time" reportOrder="300011">8:58 PM</displayinfo>
+        <displayinfo invariantName="AmbientProp" name="Ambient Temperature" reportOrder="300012">
+        </displayinfo>
+        <displayinfo invariantName="ActiveAlignmentError" name="Active Alignment Error" reportOrder="300013">
+        </displayinfo>
+        <displayinfo invariantName="ActiveDeviceProp" name="Active Device" reportOrder="300014">F04-02-10-26006</displayinfo>
+        <displayinfo invariantName="F04-02-10-26006devicePositon1DevicePositionError" name="F04-02-10-26006 -&gt; Device Position 1 Device Error" reportOrder="300015">
+        </displayinfo>
+      </sessioninfo>
+      <group name="" pictureFilePath="" reportOrder="300001">
+        <feature id="MeasureCircleFactory3" name="RIGHT DOWL" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>151.536mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-135.576mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>15.857mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.020mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.020mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+            <samples name="name" reportOrder="600000">
+              <textValue>[x:159.462mm y:-135.997mm z:0.000mm ]</textValue>
+              <sampleDev name="name">
+                <nomTextValue>0</nomTextValue>
+                <devTextValue>-0.009mm</devTextValue>
+                <ootTextValue>-0.009mm</ootTextValue>
+                <ootDescTextValue>-1</ootDescTextValue>
+              </sampleDev>
+              <Comp1NumValue>159.462mm</Comp1NumValue>
+              <Comp2NumValue>-135.997mm</Comp2NumValue>
+              <Comp3NumValue>0.000mm</Comp3NumValue>
+            </samples>
+            <samples name="name" reportOrder="600001">
+              <textValue>[x:153.250mm y:-127.846mm z:0.000mm ]</textValue>
+              <sampleDev name="name">
+                <nomTextValue>0</nomTextValue>
+                <devTextValue>0.011mm</devTextValue>
+                <ootTextValue>0.011mm</ootTextValue>
+                <ootDescTextValue>1</ootDescTextValue>
+              </sampleDev>
+              <Comp1NumValue>153.250mm</Comp1NumValue>
+              <Comp2NumValue>-127.846mm</Comp2NumValue>
+              <Comp3NumValue>0.000mm</Comp3NumValue>
+            </samples>
+            <samples name="name" reportOrder="600002">
+              <textValue>[x:150.069mm y:-143.360mm z:0.000mm ]</textValue>
+              <sampleDev name="name">
+                <nomTextValue>0</nomTextValue>
+                <devTextValue>0.007mm</devTextValue>
+                <ootTextValue>0.007mm</ootTextValue>
+                <ootDescTextValue>1</ootDescTextValue>
+              </sampleDev>
+              <Comp1NumValue>150.069mm</Comp1NumValue>
+              <Comp2NumValue>-143.360mm</Comp2NumValue>
+              <Comp3NumValue>0.000mm</Comp3NumValue>
+            </samples>
+            <samples name="name" reportOrder="600003">
+              <textValue>[x:144.431mm y:-132.036mm z:0.000mm ]</textValue>
+              <sampleDev name="name">
+                <nomTextValue>0</nomTextValue>
+                <devTextValue>-0.009mm</devTextValue>
+                <ootTextValue>-0.009mm</ootTextValue>
+                <ootDescTextValue>-1</ootDescTextValue>
+              </sampleDev>
+              <Comp1NumValue>144.431mm</Comp1NumValue>
+              <Comp2NumValue>-132.036mm</Comp2NumValue>
+              <Comp3NumValue>0.000mm</Comp3NumValue>
+            </samples>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300002">
+        <feature id="CoordinateSystemKeyInFactory0" name="World" comment="" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\CoordinateSystemKeyInFactory_Faro.Math.Geometries.CoordinateSystem_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.CoordinateSystem, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null" />
+          <statistics type="statistics" />
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300003">
+        <feature id="MeasurePlaneFactory1" name="Projection Plane 1" comment="Readings:5.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasurePlaneFactory_Faro.Math.Geometries.Plane_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Plane, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null" />
+          <statistics type="statistics">
+            <calculations name="Flatness " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.FlatnessCustomStat.png">
+              <statTextValue>0.022mm</statTextValue>
+              <statTol name="Flatness ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Flatness ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.022mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300004">
+        <feature id="MeasureCircleFactory1" name="CENTER-BORE" comment="Readings:5.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-43.895mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-194.683mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>286.195mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.034mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.034mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300005">
+        <feature id="MeasureCircleFactory2" name="LEFT-DOWL" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-239.483mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-135.864mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>15.735mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.008mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.008mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300006">
+        <feature id="MeasureCircleFactory4" name="UPPER-LEFT-DOWL" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-88.084mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-0.049mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>15.818mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.011mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.011mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300007">
+        <feature id="MeasureCircleFactory5" name="UPPER-RIGHT-DOWL" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>15.818mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.018mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.018mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300008">
+        <feature id="Measure2DLineFactory0" name="SUMP-PLANE" comment="Readings:2.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasurePlanarLineFactory_Faro.Math.Geometries.PlanarLine_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.PlanarLine, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null" />
+          <statistics type="statistics">
+            <calculations name="Straightness " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.StraightnessCustomStat.png">
+              <statTextValue>0.000mm</statTextValue>
+              <statTol name="Straightness ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Straightness ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.000mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300009">
+        <feature id="CoordinateSystemWizardFactory1" name="Coordinate System" comment="" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\CoordinateSystemWizardFactory_Faro.Math.Geometries.CoordinateSystem_True_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.CoordinateSystem, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null" />
+          <statistics type="statistics" />
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300010">
+        <feature id="MeasureCircleFactory6" name="Circle 1" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-224.132mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-108.733mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.245mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.007mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.007mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300011">
+        <feature id="MeasureCircleFactory7" name="Circle 2" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-146.130mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-24.631mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.245mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.013mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.013mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300012">
+        <feature id="MeasureCircleFactory8" name="Circle 3" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>58.179mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-24.485mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.244mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.008mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.008mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300013">
+        <feature id="MeasureCircleFactory9" name="Circle 4" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>136.262mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-108.510mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.239mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.008mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.008mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300014">
+        <feature id="MeasureCircleFactory10" name="Circle 5" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>159.309mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-167.552mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.236mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.016mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.016mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300015">
+        <feature id="MeasureCircleFactory11" name="STARTER" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>139.743mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-276.781mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.237mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.002mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.002mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300016">
+        <feature id="MeasureCircleFactory12" name="STARTER2" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>69.213mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-373.232mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>13.006mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.042mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.042mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300017">
+        <feature id="MeasureCircleFactory13" name="Circle 6" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-126.335mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-376.169mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.250mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.026mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.026mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300018">
+        <feature id="MeasureCircleFactory14" name="Circle 7" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-242.150mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-253.423mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>12.974mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.007mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.007mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300019">
+        <feature id="MeasureCircleFactory15" name="Circle 8" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>-243.085mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>-182.746mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>11.249mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.010mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.010mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300020">
+        <feature id="MeasureCircleFactory16" name="M8 THREADED" comment="Readings:4.&#xD;&#xA;" datum="" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\MeasureCircleFactory_Faro.Math.Geometries.Circle_False_False.png" reportOrder="400001">
+          <geometry type="Faro.Math.Geometries.Circle, Faro.Math.Legacy, Version=11.88.0.0, Culture=neutral, PublicKeyToken=null">
+            <field name="Center.x" reportOrder="500001">
+              <label>Center.x</label>
+              <textValue>30.684mm</textValue>
+              <tol name="Center.x">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.x">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.y" reportOrder="500002">
+              <label>Center.y</label>
+              <textValue>2.198mm</textValue>
+              <tol name="Center.y">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.y">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Center.z" reportOrder="500003">
+              <label>Center.z</label>
+              <textValue>0.000mm</textValue>
+              <tol name="Center.z">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Center.z">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+            <field name="Diameter" reportOrder="500009">
+              <label>Diameter</label>
+              <textValue>6.996mm</textValue>
+              <tol name="Diameter">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>-0.050mm</ltolTextValue>
+              </tol>
+              <dev name="Diameter">
+                <nomTextValue>
+                </nomTextValue>
+                <devTextValue>
+                </devTextValue>
+                <ootTextValue>
+                </ootTextValue>
+                <ootDescTextValue>
+                </ootDescTextValue>
+                <color>-16777216</color>
+              </dev>
+            </field>
+          </geometry>
+          <statistics type="statistics">
+            <calculations name="Circularity " reportOrder="600000" pictureFilePath="C:\Users\markp\AppData\Local\Temp\FAROImages\Faro.Metrology.BusinessLogic.GDT.CircularityCustomStat.png">
+              <statTextValue>0.029mm</statTextValue>
+              <statTol name="Circularity ">
+                <utolTextValue>0.050mm</utolTextValue>
+                <ltolTextValue>0.000mm</ltolTextValue>
+              </statTol>
+              <statDev name="Circularity ">
+                <nomTextValue>0.000mm</nomTextValue>
+                <devTextValue>0.029mm</devTextValue>
+                <ootTextValue>0.000mm</ootTextValue>
+                <ootDescTextValue>0</ootDescTextValue>
+                <color>-10181042</color>
+              </statDev>
+            </calculations>
+          </statistics>
+        </feature>
+      </group>
+      <group name="" pictureFilePath="" reportOrder="300021">
+        <overallStatus status="Pass">
+          <color>-10181042</color>
+        </overallStatus>
+      </group>
+    </session>
+  </part>
+</reportData>

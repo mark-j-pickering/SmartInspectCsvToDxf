@@ -3,6 +3,10 @@ using SmartInspectCsvToDxf.Models;
 
 namespace SmartInspectCsvToDxf.Services;
 
+// Legacy format, kept for older exports already in circulation. The simple
+// name,x,y,z,diameter,radius schema doesn't reflect current SmartInspect output
+// (see SmartInspectReportReader/SmartInspectXmlReportReader) and may need updating
+// if a newer CSV export shape shows up.
 public static class CsvFeatureReader
 {
     public static List<Feature> Read(string path)

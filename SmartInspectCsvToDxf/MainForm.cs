@@ -6,8 +6,8 @@ namespace SmartInspectCsvToDxf;
 public sealed partial class MainForm : Form
 {
     private readonly AppSettings _settings;
-    private FileSystemWatcher? _watcher;
-    private string? _currentCsvPath;
+    private readonly List<FileSystemWatcher> _watchers = [];
+    private string? _currentReportPath;
     private string _savedInputFolder = string.Empty;
     private List<Feature> _currentFeatures = [];
 
@@ -25,7 +25,7 @@ public sealed partial class MainForm : Form
 
         if (Directory.Exists(_settings.InputFolder))
         {
-            LoadCsvFileList(_settings.InputFolder);
+            LoadReportFileList(_settings.InputFolder);
             StartWatching(_settings.InputFolder);
         }
     }
@@ -33,24 +33,24 @@ public sealed partial class MainForm : Form
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         SaveSettings();
-        _watcher?.Dispose();
+        DisposeWatchers();
         base.OnFormClosing(e);
     }
 
     private void RefreshTimer_Tick(object? sender, EventArgs e)
     {
         _refreshTimer.Stop();
-        RefreshCsvFileListPreserveSelection();
-        ReloadCurrentCsvIfStillPresent();
+        RefreshReportFileListPreserveSelection();
+        ReloadCurrentReportIfStillPresent();
     }
 
     private void FileListBox_SelectedIndexChanged(object? sender, EventArgs e)
     {
-        LoadSelectedCsv();
+        LoadSelectedReport();
         UpdateExportButtons();
     }
 
-    private void RefreshButton_Click(object? sender, EventArgs e) => RefreshCsvFileListPreserveSelection();
+    private void RefreshButton_Click(object? sender, EventArgs e) => RefreshReportFileListPreserveSelection();
 
     private void MirrorCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
@@ -77,7 +77,7 @@ public sealed partial class MainForm : Form
 
     private void BrowseInputButton_Click(object? sender, EventArgs e)
     {
-        var selected = BrowseForFolder("Select folder containing SmartInspect CSV files", _inputFolderTextBox.Text);
+        var selected = BrowseForFolder("Select folder containing SmartInspect report files", _inputFolderTextBox.Text);
         if (selected is null)
             return;
 
@@ -87,7 +87,7 @@ public sealed partial class MainForm : Form
             _outputFolderTextBox.Text = selected;
 
         SaveSettings();
-        LoadCsvFileList(selected);
+        LoadReportFileList(selected);
         StartWatching(selected);
     }
 
@@ -145,29 +145,43 @@ public sealed partial class MainForm : Form
         if (string.Equals(previousInputFolder, _settings.InputFolder, StringComparison.OrdinalIgnoreCase))
             return;
 
-        LoadCsvFileList(_settings.InputFolder);
+        LoadReportFileList(_settings.InputFolder);
         StartWatching(_settings.InputFolder);
     }
 
     private void StartWatching(string folder)
     {
-        _watcher?.Dispose();
-        _watcher = null;
+        DisposeWatchers();
 
         if (!Directory.Exists(folder))
             return;
 
-        _watcher = new FileSystemWatcher(folder, "*.csv")
+        foreach (var pattern in ReportFileReader.FilePatterns)
+            _watchers.Add(CreateWatcher(folder, pattern));
+    }
+
+    private FileSystemWatcher CreateWatcher(string folder, string pattern)
+    {
+        var watcher = new FileSystemWatcher(folder, pattern)
         {
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
             IncludeSubdirectories = false,
             EnableRaisingEvents = true
         };
 
-        _watcher.Created += (_, _) => QueueFileRefresh();
-        _watcher.Deleted += (_, _) => QueueFileRefresh();
-        _watcher.Renamed += (_, _) => QueueFileRefresh();
-        _watcher.Changed += (_, _) => QueueFileRefresh();
+        watcher.Created += (_, _) => QueueFileRefresh();
+        watcher.Deleted += (_, _) => QueueFileRefresh();
+        watcher.Renamed += (_, _) => QueueFileRefresh();
+        watcher.Changed += (_, _) => QueueFileRefresh();
+
+        return watcher;
+    }
+
+    private void DisposeWatchers()
+    {
+        foreach (var watcher in _watchers)
+            watcher.Dispose();
+        _watchers.Clear();
     }
 
     private void QueueFileRefresh()
@@ -182,7 +196,7 @@ public sealed partial class MainForm : Form
         }));
     }
 
-    private void LoadCsvFileList(string folder, string? preferredSelection = null)
+    private void LoadReportFileList(string folder, string? preferredSelection = null)
     {
         _fileListBox.BeginUpdate();
         try
@@ -191,22 +205,23 @@ public sealed partial class MainForm : Form
 
             if (!Directory.Exists(folder))
             {
-                _statusLabel.Text = "CSV folder not found";
+                _statusLabel.Text = "Report folder not found";
                 return;
             }
 
-            var files = Directory.GetFiles(folder, "*.csv")
+            var files = ReportFileReader.FilePatterns
+                .SelectMany(pattern => Directory.GetFiles(folder, pattern))
                 .OrderByDescending(File.GetLastWriteTime)
                 .ThenBy(Path.GetFileName)
                 .ToList();
 
             foreach (var file in files)
-                _fileListBox.Items.Add(new CsvFileItem(file));
+                _fileListBox.Items.Add(new ReportFileItem(file));
 
             if (preferredSelection is not null)
-                SelectCsvFile(preferredSelection);
+                SelectReportFile(preferredSelection);
 
-            _statusLabel.Text = files.Count == 1 ? "1 CSV file found" : $"{files.Count} CSV files found";
+            _statusLabel.Text = files.Count == 1 ? "1 report file found" : $"{files.Count} report files found";
         }
         finally
         {
@@ -216,17 +231,17 @@ public sealed partial class MainForm : Form
         UpdateExportButtons();
     }
 
-    private void RefreshCsvFileListPreserveSelection()
+    private void RefreshReportFileListPreserveSelection()
     {
-        var previous = _currentCsvPath;
-        LoadCsvFileList(_inputFolderTextBox.Text, previous);
+        var previous = _currentReportPath;
+        LoadReportFileList(_inputFolderTextBox.Text, previous);
     }
 
-    private void SelectCsvFile(string fullPath)
+    private void SelectReportFile(string fullPath)
     {
         for (var i = 0; i < _fileListBox.Items.Count; i++)
         {
-            if (_fileListBox.Items[i] is CsvFileItem item && string.Equals(item.FullPath, fullPath, StringComparison.OrdinalIgnoreCase))
+            if (_fileListBox.Items[i] is ReportFileItem item && string.Equals(item.FullPath, fullPath, StringComparison.OrdinalIgnoreCase))
             {
                 _fileListBox.SelectedIndex = i;
                 return;
@@ -234,28 +249,28 @@ public sealed partial class MainForm : Form
         }
     }
 
-    private void LoadSelectedCsv()
+    private void LoadSelectedReport()
     {
-        if (_fileListBox.SelectedItem is not CsvFileItem item)
+        if (_fileListBox.SelectedItem is not ReportFileItem item)
             return;
 
-        LoadCsv(item.FullPath, showErrors: true);
+        LoadReport(item.FullPath, showErrors: true);
     }
 
-    private void ReloadCurrentCsvIfStillPresent()
+    private void ReloadCurrentReportIfStillPresent()
     {
-        if (_currentCsvPath is null || !File.Exists(_currentCsvPath))
+        if (_currentReportPath is null || !File.Exists(_currentReportPath))
             return;
 
-        LoadCsv(_currentCsvPath, showErrors: false);
+        LoadReport(_currentReportPath, showErrors: false);
     }
 
-    private void LoadCsv(string path, bool showErrors)
+    private void LoadReport(string path, bool showErrors)
     {
         try
         {
-            _currentCsvPath = path;
-            _currentFeatures = CsvFeatureReader.Read(path);
+            _currentReportPath = path;
+            _currentFeatures = ReportFileReader.Read(path);
             RefreshPreview();
             UpdateExportButtons();
             _statusLabel.Text = $"Loaded {Path.GetFileName(path)} — {_currentFeatures.Count} features";
@@ -267,13 +282,13 @@ public sealed partial class MainForm : Form
         }
         catch (Exception ex)
         {
-            _currentCsvPath = null;
+            _currentReportPath = null;
             _currentFeatures = [];
             _previewPanel.SetFeatures([], _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
             UpdateExportButtons();
-            _statusLabel.Text = "Failed to load CSV";
+            _statusLabel.Text = "Failed to load report";
             if (showErrors)
-                MessageBox.Show(this, ex.Message, "CSV load error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, ex.Message, "Report load error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -293,7 +308,7 @@ public sealed partial class MainForm : Form
 
     private void ExportDxfToConfiguredFolder(string folder, string targetName)
     {
-        var items = _fileListBox.SelectedItems.Cast<CsvFileItem>().ToList();
+        var items = _fileListBox.SelectedItems.Cast<ReportFileItem>().ToList();
         if (items.Count == 0)
             return;
 
@@ -310,7 +325,7 @@ public sealed partial class MainForm : Form
         {
             try
             {
-                var features = CsvFeatureReader.Read(item.FullPath);
+                var features = ReportFileReader.Read(item.FullPath);
                 if (features.Count == 0)
                 {
                     failures.Add((Path.GetFileName(item.FullPath), "No valid features found"));
@@ -356,9 +371,9 @@ public sealed partial class MainForm : Form
             failures.Count == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
-    private string BuildOutputPath(string folder, string csvPath)
+    private string BuildOutputPath(string folder, string reportPath)
     {
-        var defaultName = Path.GetFileNameWithoutExtension(csvPath) ?? "features";
+        var defaultName = Path.GetFileNameWithoutExtension(reportPath) ?? "features";
         if (_mirrorCheckBox.Checked)
             defaultName += "_mirrored_y";
 
@@ -370,9 +385,9 @@ public sealed partial class MainForm : Form
         return Path.Combine(folder, $"{defaultName}_{stamp}.dxf");
     }
 
-    private sealed class CsvFileItem
+    private sealed class ReportFileItem
     {
-        public CsvFileItem(string fullPath) => FullPath = fullPath;
+        public ReportFileItem(string fullPath) => FullPath = fullPath;
         public string FullPath { get; }
         public override string ToString() => Path.GetFileName(FullPath);
     }

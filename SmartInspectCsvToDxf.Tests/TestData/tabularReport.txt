@@ -1,0 +1,171 @@
+FARO Technologies Inc.
+125 Technology Park                              	                  	                                          	                         	http://www.faro.com
+FL 32746                                         	                  	                                          	                         	support@faro.com
+Lake Mary                                        	                  	                                          	                         	(407) 333-9911
+USA                                              	                  	                                          	                         	23 Jul 2026 08:58 PM
+Session Information
+Program Name                                     	                  	
+File Name                                        	                  	8HP-JAGUAR-GEARBOX-TO-BELLHOUSING-mark.fcd
+Part Name                                        	                  	
+Session Name                                     	                  	
+Note                                             	                  	
+Operator                                         	                  	Mark Pickering
+Company Name                                     	                  	
+Address                                          	                  	
+Telephone No.                                    	                  	
+Email Address                                    	                  	
+Date                                             	                  	7/23/2026
+Time                                             	                  	8:58 PM
+Ambient Temperature                              	                  	
+Active Alignment Error                           	                  	
+Active Device                                    	                  	F04-02-10-26006
+F04-02-10-26006 -> Device Position 1 Device Error	                  	
+                                                 	RIGHT DOWL        	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	151.536mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-135.576mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	15.857mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.020mm                                   	                         	0.020mm             	0.000mm 	0.050mm	0.000mm
+Readings                                         	                  	x                                         	y                        	z                   	dev     	       	oot
+                                                 	                  	159.462mm                                 	-135.997mm               	0.000mm             	-0.009mm	       	-0.009mm
+                                                 	                  	153.250mm                                 	-127.846mm               	0.000mm             	0.011mm 	       	0.011mm
+                                                 	                  	150.069mm                                 	-143.360mm               	0.000mm             	0.007mm 	       	0.007mm
+                                                 	                  	144.431mm                                 	-132.036mm               	0.000mm             	-0.009mm	       	-0.009mm
+ 
+                                                 	World             	                                          	
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+ 
+                                                 	Projection Plane 1	                                          	Readings:5.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Flatness                                         	                  	0.022mm                                   	                         	0.022mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	CENTER-BORE       	                                          	Readings:5.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-43.895mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-194.683mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	286.195mm                                 	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.034mm                                   	                         	0.034mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	LEFT-DOWL         	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-239.483mm                                	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-135.864mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	15.735mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.008mm                                   	                         	0.008mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	UPPER-LEFT-DOWL   	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-88.084mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-0.049mm                                  	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	15.818mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.011mm                                   	                         	0.011mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	UPPER-RIGHT-DOWL  	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	15.818mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.018mm                                   	                         	0.018mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	SUMP-PLANE        	                                          	Readings:2.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Straightness                                     	                  	0.000mm                                   	                         	0.000mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Coordinate System 	                                          	
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+ 
+                                                 	Circle 1          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-224.132mm                                	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-108.733mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.245mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.007mm                                   	                         	0.007mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 2          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-146.130mm                                	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-24.631mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.245mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.013mm                                   	                         	0.013mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 3          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	58.179mm                                  	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-24.485mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.244mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.008mm                                   	                         	0.008mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 4          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	136.262mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-108.510mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.239mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.008mm                                   	                         	0.008mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 5          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	159.309mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-167.552mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.236mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.016mm                                   	                         	0.016mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	STARTER           	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	139.743mm                                 	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-276.781mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.237mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.002mm                                   	                         	0.002mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	STARTER2          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	69.213mm                                  	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-373.232mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	13.006mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.042mm                                   	                         	0.042mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 6          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-126.335mm                                	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-376.169mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.250mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.026mm                                   	                         	0.026mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 7          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-242.150mm                                	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-253.423mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	12.974mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.007mm                                   	                         	0.007mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	Circle 8          	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	-243.085mm                                	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	-182.746mm                                	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	11.249mm                                  	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.010mm                                   	                         	0.010mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	M8 THREADED       	                                          	Readings:4.
+                                                 	                  	actual                                    	nominal                  	dev                 	 - tol  	 +tol  	oot
+Center.x                                         	                  	30.684mm                                  	                         	                    	-0.050mm	0.050mm	
+Center.y                                         	                  	2.198mm                                   	                         	                    	-0.050mm	0.050mm	
+Center.z                                         	                  	0.000mm                                   	                         	                    	-0.050mm	0.050mm	
+Diameter                                         	                  	6.996mm                                   	                         	                    	-0.050mm	0.050mm	
+Circularity                                      	                  	0.029mm                                   	                         	0.029mm             	0.000mm 	0.050mm	0.000mm
+ 
+                                                 	                  	                                          	Overall Inspection Status	                    	        	Pass
+CAM2 Inspection Report                           	                  	                                          	                         	                    	        	       	1/1

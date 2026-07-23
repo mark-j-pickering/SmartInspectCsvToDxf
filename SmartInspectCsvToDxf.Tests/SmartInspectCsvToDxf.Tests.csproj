@@ -24,4 +24,8 @@
     <ProjectReference Include="..\SmartInspectCsvToDxf\SmartInspectCsvToDxf.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="TestData\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

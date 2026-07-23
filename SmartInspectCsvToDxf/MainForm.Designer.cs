@@ -105,7 +105,7 @@ partial class MainForm
         _csvFolderLabel.Name = "_csvFolderLabel";
         _csvFolderLabel.Size = new Size(84, 30);
         _csvFolderLabel.TabIndex = 0;
-        _csvFolderLabel.Text = "CSV folder:";
+        _csvFolderLabel.Text = "Report folder:";
         _csvFolderLabel.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // _inputFolderTextBox
@@ -247,7 +247,7 @@ partial class MainForm
         _filesLabel.Name = "_filesLabel";
         _filesLabel.Size = new Size(156, 30);
         _filesLabel.TabIndex = 0;
-        _filesLabel.Text = "CSV Files";
+        _filesLabel.Text = "Report Files";
         _filesLabel.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // _refreshButton
