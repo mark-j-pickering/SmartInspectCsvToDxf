@@ -82,11 +82,21 @@ public static class SmartInspectPdfReportReader
                 if (row.Count < 2 || currentName is null)
                     continue;
 
+                var keyword = firstWord.ToLowerInvariant();
+
+                // These fields always carry Low/Up Tol columns (label + 2 words); an Actual
+                // reading adds a 3rd word in between. When Actual (mm) is blank - an
+                // unmeasured feature - PdfPig emits no word for that cell at all, so without
+                // this check row[1] would be misread as the Low Tol value instead of skipped.
+                var isPlacementField = keyword is "center.x" or "center.y" or "center.z" or "diameter" or "radius";
+                if (isPlacementField && row.Count < 4)
+                    continue;
+
                 var value = ReportValueParser.ParseLeadingNumber(row[1].Text);
                 if (value is null)
                     continue;
 
-                switch (firstWord.ToLowerInvariant())
+                switch (keyword)
                 {
                     case "center.x":
                         centerX = value;

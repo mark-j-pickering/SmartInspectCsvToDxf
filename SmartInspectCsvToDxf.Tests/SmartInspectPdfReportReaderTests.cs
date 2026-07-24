@@ -34,4 +34,17 @@ public sealed class SmartInspectPdfReportReaderTests
 
         Assert.DoesNotContain(features, f => f.Name is "World" or "Coordinate System" or "Projection Plane 1" or "SUMP-PLANE");
     }
+
+    [Fact]
+    public void Read_UnmeasuredReport_SkipsFeaturesWithBlankActualColumn()
+    {
+        // Real export of a session where no readings were taken: every feature shows
+        // "Nr. of readings: 0" and a blank Actual (mm) column, so Center.x/y/z/Diameter
+        // rows only carry their Low/Up Tol words - nothing should be placed.
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "unmeasuredReport.pdf");
+
+        var features = SmartInspectPdfReportReader.Read(path);
+
+        Assert.Empty(features);
+    }
 }
