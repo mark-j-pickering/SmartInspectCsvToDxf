@@ -9,11 +9,15 @@ public static class SmartInspectPdfReportReader
     // Rows whose leading word is one of these are either data we care about
     // (Center.x/y/z, Diameter, Radius) or data we deliberately ignore (Circularity,
     // Flatness, Straightness, the Readings sub-table, the actual/nominal/dev header
-    // row) - anything else that starts with a letter is a feature/section name row.
+    // row, the standalone "Properties" sub-heading some report templates print under
+    // every feature name, or a "Solver method:"/"Nr. of readings:" line that renders
+    // far enough from the feature name to land in its own row) - anything else that
+    // starts with a letter is a feature/section name row.
     private static readonly HashSet<string> RecognizedRowKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "actual", "center.x", "center.y", "center.z", "diameter", "radius",
-        "circularity", "flatness", "straightness", "readings"
+        "circularity", "flatness", "straightness", "readings", "properties",
+        "solver", "nr."
     };
 
     private const double RowTolerance = 6.0;
@@ -121,9 +125,16 @@ public static class SmartInspectPdfReportReader
         return features;
     }
 
+    // Marks where the trailing "Solver method: Standard   Nr. of readings: N" template
+    // text starts within a name row - it renders close enough vertically to the feature
+    // name in some reports that both end up grouped into a single row.
+    private static readonly HashSet<string> NameSuffixMarkers = new(StringComparer.OrdinalIgnoreCase) { "Solver", "Nr." };
+
     private static string BuildFeatureName(List<Word> row)
     {
-        var words = row;
+        var cutIndex = row.FindIndex(w => NameSuffixMarkers.Contains(w.Text));
+        var words = cutIndex >= 0 ? row.Take(cutIndex).ToList() : row;
+
         if (words.Count > 1 && words[^1].Text.StartsWith("Readings:", StringComparison.OrdinalIgnoreCase))
             words = words.Take(words.Count - 1).ToList();
 
