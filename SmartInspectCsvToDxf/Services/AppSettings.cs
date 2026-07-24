@@ -31,10 +31,22 @@ public sealed class AppSettings
         }
     }
 
-    public void Save()
+    // Mirrors Load()'s resilience: a locked-down or redirected AppData folder (permissions,
+    // Group Policy, AV/EDR, an unsynced roaming profile) can make this throw. Returning false
+    // instead of letting it propagate means callers can surface a clear "didn't save" message
+    // instead of the write silently failing and the stale settings.json persisting unnoticed.
+    public bool Save()
     {
-        Directory.CreateDirectory(SettingsDirectory);
-        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(SettingsPath, json);
+        try
+        {
+            Directory.CreateDirectory(SettingsDirectory);
+            var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(SettingsPath, json);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

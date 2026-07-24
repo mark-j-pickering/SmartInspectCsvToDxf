@@ -129,7 +129,10 @@ public sealed partial class MainForm : Form
         _settings.OutputFolder = _outputFolderTextBox.Text.Trim();
         _settings.UsbFolder = _usbFolderTextBox.Text.Trim();
         _settings.MirrorAboutYAxis = _mirrorCheckBox.Checked;
-        _settings.Save();
+
+        if (!_settings.Save())
+            _statusLabel.Text = "Could not save settings — check permissions on %APPDATA%\\SmartInspectCsvToDxf";
+
         _savedInputFolder = _settings.InputFolder;
     }
 
