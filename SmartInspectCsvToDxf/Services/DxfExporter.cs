@@ -27,11 +27,17 @@ public static class DxfExporter
         {
             var centre = new Vector3(f.X, f.Y, f.Z);
 
-            var circle = new Circle(centre, f.Radius)
+            // Centre-only points (no Diameter/Radius in the source report) have Radius 0 -
+            // netDxf's Circle requires a positive radius, so skip it and fall back to just
+            // the centre cross and label for those.
+            if (f.Radius > 0)
             {
-                Layer = circlesLayer
-            };
-            doc.Entities.Add(circle);
+                var circle = new Circle(centre, f.Radius)
+                {
+                    Layer = circlesLayer
+                };
+                doc.Entities.Add(circle);
+            }
 
             // Small centre cross using two short lines.
             var crossSize = Math.Max(f.Radius * 0.08, 1.0);

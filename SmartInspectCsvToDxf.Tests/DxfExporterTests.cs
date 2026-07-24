@@ -104,6 +104,21 @@ public sealed class DxfExporterTests : IDisposable
         Assert.Empty(doc.Entities.Texts);
     }
 
+    [Fact]
+    public void Export_SkipsCircle_ForCentreOnlyPoint()
+    {
+        // A feature with no Diameter/Radius in the source report (e.g. a SmartInspect
+        // "Point") has Radius 0 - netDxf rejects a zero-radius Circle, so it should be
+        // skipped while the centre cross and label are still written.
+        var path = ExportTempDxf([Hole("point1", 10, 20, radius: 0)]);
+
+        var doc = DxfDocument.Load(path);
+
+        Assert.Empty(doc.Entities.Circles);
+        Assert.Equal(2, doc.Entities.Lines.Count(l => l.Layer.Name == "FEATURE_CENTRES"));
+        Assert.Single(doc.Entities.Texts, t => t.Value == "point1");
+    }
+
     private static Feature Hole(string name, double x, double y, double radius) => new()
     {
         Name = name,
