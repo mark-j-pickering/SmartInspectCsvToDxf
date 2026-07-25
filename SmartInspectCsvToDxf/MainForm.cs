@@ -131,7 +131,11 @@ public sealed partial class MainForm : Form
         _settings.MirrorAboutYAxis = _mirrorCheckBox.Checked;
 
         if (!_settings.Save())
-            _statusLabel.Text = "Could not save settings — check permissions on %APPDATA%\\SmartInspectCsvToDxf";
+        {
+            const string message = "Could not save settings — check permissions on %APPDATA%\\SmartInspectCsvToDxf";
+            _statusLabel.Text = message;
+            MessageBox.Show(this, message, "Settings not saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
 
         _savedInputFolder = _settings.InputFolder;
     }
