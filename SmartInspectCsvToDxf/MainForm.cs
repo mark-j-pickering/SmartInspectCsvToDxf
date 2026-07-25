@@ -1,11 +1,14 @@
 using SmartInspectCsvToDxf.Models;
 using SmartInspectCsvToDxf.Services;
+using SmartInspectCsvToDxf.Services.Updates;
+using SmartInspectCsvToDxf.UI;
 
 namespace SmartInspectCsvToDxf;
 
 public sealed partial class MainForm : Form
 {
     private readonly AppSettings _settings;
+    private readonly UpdateService _updateService;
     private readonly List<FileSystemWatcher> _watchers = [];
     private string? _currentReportPath;
     private string _savedInputFolder = string.Empty;
@@ -16,6 +19,7 @@ public sealed partial class MainForm : Form
         InitializeComponent();
 
         _settings = AppSettings.Load();
+        _updateService = new UpdateService(new UpdateDiagnosticLog());
 
         _mirrorCheckBox.Checked = _settings.MirrorAboutYAxis;
         _inputFolderTextBox.Text = _settings.InputFolder;
@@ -28,6 +32,69 @@ public sealed partial class MainForm : Form
             LoadReportFileList(_settings.InputFolder);
             StartWatching(_settings.InputFolder);
         }
+
+        Shown += MainForm_Shown;
+    }
+
+    private async void MainForm_Shown(object? sender, EventArgs e)
+    {
+        if (UpdateService.ShouldSkipAutomaticStartupCheck)
+            return;
+
+        // Quiet on purpose: no dialog for "up to date" or for failures (offline, GitHub
+        // unreachable, etc.) during the automatic startup check - only an available update
+        // is worth interrupting the user for. Failures still land in update.log.
+        var result = await _updateService.CheckForUpdatesAsync();
+        if (result is { Status: UpdateCheckStatus.UpdateAvailable, UpdateInfo: not null })
+            ShowUpdateAvailableDialog(result);
+    }
+
+    private async void CheckForUpdatesMenuItem_Click(object? sender, EventArgs e)
+    {
+        _checkForUpdatesMenuItem.Enabled = false;
+        try
+        {
+            var result = await _updateService.CheckForUpdatesAsync();
+            switch (result.Status)
+            {
+                case UpdateCheckStatus.UpdateAvailable when result.UpdateInfo is not null:
+                    ShowUpdateAvailableDialog(result);
+                    break;
+                case UpdateCheckStatus.UpToDate:
+                    MessageBox.Show(
+                        this,
+                        $"You're running the latest version (v{result.CurrentVersion}).",
+                        "No updates available",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    break;
+                default:
+                    MessageBox.Show(
+                        this,
+                        result.ErrorMessage ?? "The update check could not be completed.",
+                        "Update check failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    break;
+            }
+        }
+        finally
+        {
+            _checkForUpdatesMenuItem.Enabled = true;
+        }
+    }
+
+    private void AboutMenuItem_Click(object? sender, EventArgs e)
+    {
+        using var dialog = new AboutDialog(_updateService.GetCurrentVersionText());
+        dialog.ShowDialog(this);
+    }
+
+    private void ShowUpdateAvailableDialog(UpdateCheckResult result)
+    {
+        var view = new UpdateInfoView(result.CurrentVersion, result.AvailableVersion!, result.UpdateInfo!);
+        using var dialog = new UpdateAvailableDialog(_updateService, view);
+        dialog.ShowDialog(this);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)

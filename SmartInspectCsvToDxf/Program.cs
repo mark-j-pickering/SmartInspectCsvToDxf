@@ -1,3 +1,6 @@
+using SmartInspectCsvToDxf.Services.Updates;
+using Velopack;
+
 namespace SmartInspectCsvToDxf;
 
 internal static class Program
@@ -10,6 +13,13 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        // Must run before any other startup code: on first launch after an install/update,
+        // Velopack briefly re-invokes the exe with internal hook arguments (create/remove
+        // shortcuts, etc.) and expects to exit immediately afterwards. Handing control to the
+        // mutex/WinForms pipeline first would show our UI (or block on the single-instance
+        // mutex) during that hook invocation.
+        VelopackApp.Build().SetLogger(new UpdateDiagnosticLog()).Run();
+
         using var mutex = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out var createdNew);
         if (!createdNew)
         {
