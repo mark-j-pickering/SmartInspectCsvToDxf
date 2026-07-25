@@ -106,22 +106,22 @@ jobs:
           --packAuthors "Mark Pickering"
           --noPortable
 
-      - name: Create GitHub release with auto-generated notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          gh release create ${{ steps.tag.outputs.tag }}
-          --repo ${{ github.repository }}
-          --title "${{ env.PRODUCT_NAME }} ${{ steps.tag.outputs.tag }}"
-          --generate-notes
-
-      - name: Upload Velopack installer + update packages
+      # vpk is the sole creator of the release (must not also `gh release create` it
+      # separately): `vpk upload github --merge` only merges into an existing *draft*
+      # release created by an earlier vpk run, not into an already-published release. On
+      # the first real release this bit us - `gh release create` had already published
+      # v0.1.0, so `--merge` found nothing to merge with and silently created a second,
+      # orphaned draft release holding the real installer assets while the "real" release
+      # ended up with only the portable ZIP. Letting vpk --publish create the one release
+      # up front, and only ever attaching to it afterwards by tag, avoids that split.
+      - name: Publish Velopack installer + update packages to GitHub
         run: >
           vpk upload github
           --repoUrl https://github.com/${{ github.repository }}
           --token ${{ secrets.GITHUB_TOKEN }}
           --tag ${{ steps.tag.outputs.tag }}
-          --merge
+          --releaseName "${{ env.PRODUCT_NAME }} ${{ steps.tag.outputs.tag }}"
+          --publish
           -o ${{ env.PACKAGES_DIR }}
 
       - name: Upload portable ZIP to release
@@ -131,3 +131,19 @@ jobs:
         run: |
           $zip = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter *.zip | Select-Object -First 1
           gh release upload ${{ steps.tag.outputs.tag }} $zip.FullName --repo ${{ github.repository }} --clobber
+
+      # `gh release create --generate-notes` isn't an option here (vpk already created the
+      # release), and the release-update API has no `generate_release_notes` field - only
+      # release *creation* does. The dedicated generate-notes endpoint computes the same
+      # auto-generated body text without creating/touching a release, so it's used here
+      # purely to source the text for a follow-up PATCH.
+      - name: Generate and apply release notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          gh api "repos/$REPO/releases/generate-notes" -f tag_name="$TAG" --jq .body > release-notes.md
+          RELEASE_ID=$(gh api "repos/$REPO/releases/tags/$TAG" --jq .id)
+          gh api -X PATCH "repos/$REPO/releases/$RELEASE_ID" -F body=@release-notes.md
