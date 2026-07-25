@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re-)build and release, e.g. v1.2.3. Leave empty when re-running from a tag push."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  APP_PROJECT: SmartInspectCsvToDxf/SmartInspectCsvToDxf.csproj
+  TEST_PROJECT: SmartInspectCsvToDxf.Tests/SmartInspectCsvToDxf.Tests.csproj
+  PACK_ID: SmartInspectCsvToDxf
+  MAIN_EXE: SmartInspectCsvToDxf.exe
+  PRODUCT_NAME: "BUM SmartInspect Converter"
+  PUBLISH_DIR: publish
+  PACKAGES_DIR: releases
+  ARTIFACTS_DIR: artifacts
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Determine release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$TAG' does not match the required vX.Y.Z format."
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore SmartInspectCsvToDxf.sln
+
+      - name: Build (Release)
+        run: dotnet build SmartInspectCsvToDxf.sln -c Release --no-restore -p:Version=${{ steps.tag.outputs.version }}
+
+      - name: Test
+        run: dotnet test ${{ env.TEST_PROJECT }} -c Release --no-build
+
+      # Self-contained, win-x64, no trimming (netDxf/PdfPig are not verified trim-safe).
+      - name: Publish self-contained win-x64
+        run: >
+          dotnet publish ${{ env.APP_PROJECT }} -c Release -r win-x64 --self-contained true
+          -p:Version=${{ steps.tag.outputs.version }}
+          -o ${{ env.PUBLISH_DIR }}
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ env.ARTIFACTS_DIR }}" | Out-Null
+          $zipName = "SmartInspectCsvToDxf-${{ steps.tag.outputs.version }}-portable-win-x64.zip"
+          Compress-Archive -Path "${{ env.PUBLISH_DIR }}\*" -DestinationPath "${{ env.ARTIFACTS_DIR }}\$zipName" -Force
+
+      - name: Install Velopack CLI (vpk)
+        run: dotnet tool install --global vpk
+
+      # Fetches the previous release's package(s) so `vpk pack` can compute delta updates
+      # against them. Expected to have nothing to do (and may exit non-zero) on the very
+      # first release - that's fine, vpk pack still produces full packages without a baseline.
+      - name: Download previous release assets for delta packaging
+        continue-on-error: true
+        run: >
+          vpk download github
+          --repoUrl https://github.com/${{ github.repository }}
+          --token ${{ secrets.GITHUB_TOKEN }}
+          -o ${{ env.PACKAGES_DIR }}
+
+      - name: Pack Velopack release
+        run: >
+          vpk pack
+          -u ${{ env.PACK_ID }}
+          -v ${{ steps.tag.outputs.version }}
+          -p ${{ env.PUBLISH_DIR }}
+          -o ${{ env.PACKAGES_DIR }}
+          -e ${{ env.MAIN_EXE }}
+          --packTitle "${{ env.PRODUCT_NAME }}"
+          --packAuthors "Mark Pickering"
+          --noPortable
+
+      - name: Create GitHub release with auto-generated notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create ${{ steps.tag.outputs.tag }}
+          --repo ${{ github.repository }}
+          --title "${{ env.PRODUCT_NAME }} ${{ steps.tag.outputs.tag }}"
+          --generate-notes
+
+      - name: Upload Velopack installer + update packages
+        run: >
+          vpk upload github
+          --repoUrl https://github.com/${{ github.repository }}
+          --token ${{ secrets.GITHUB_TOKEN }}
+          --tag ${{ steps.tag.outputs.tag }}
+          --merge
+          -o ${{ env.PACKAGES_DIR }}
+
+      - name: Upload portable ZIP to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $zip = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter *.zip | Select-Object -First 1
+          gh release upload ${{ steps.tag.outputs.tag }} $zip.FullName --repo ${{ github.repository }} --clobber

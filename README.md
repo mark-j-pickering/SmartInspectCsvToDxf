@@ -2,6 +2,33 @@
 
 Small WinForms utility for converting FARO CAM2 SmartInspect tabular report exports into DXF.
 
+## Installing
+
+Download the latest `Setup.exe` from [GitHub Releases](https://github.com/mark-j-pickering/SmartInspectCsvToDxf/releases) and run it. This installs the app for the current user and creates a Start Menu shortcut — use that shortcut for all future launches, since it's what carries the app forward through automatic updates.
+
+### Migrating from an existing portable ZIP install
+
+If you're currently running the app from an extracted ZIP folder:
+
+1. Close the running (portable) application.
+2. Download the latest `Setup.exe` from GitHub Releases.
+3. Run it to install the app.
+4. Use the installed Start Menu shortcut from then on — the old portable folder can be deleted once you've confirmed the installed copy has your settings (see below; nothing needs to be copied over manually).
+
+## Automatic updates
+
+The installed application checks GitHub Releases for updates shortly after it starts, and silently does nothing if you're already up to date or the check fails (e.g. no internet connection) — it won't nag you during normal use. When a newer stable release is available, a dialog offers **Install and Restart** or **Later**; nothing is downloaded or installed without your say-so.
+
+You can also check manually at any time via **Help → Check for Updates...**, which always reports one of: an update is available, you're already up to date, or the check couldn't be completed.
+
+Settings (report/output/USB folders, mirror option) are stored per-user in `%APPDATA%\SmartInspectCsvToDxf\settings.json`, not inside the installed application folder, so they survive every update automatically.
+
+## Portable version
+
+Each release also publishes a `SmartInspectCsvToDxf-<version>-portable-win-x64.zip` — a self-contained, extract-and-run build for machines where installing isn't practical (e.g. a locked-down USB-only workflow).
+
+**The portable edition does not check for or install updates.** It isn't a Velopack install, so update checks are automatically skipped rather than failing; if you need the latest version, download a newer portable ZIP (or switch to the installed edition above, which does update itself).
+
 ## Supported input formats
 
 The app reads FARO CAM2 SmartInspect's report export — four formats, auto-detected by extension:
@@ -69,6 +96,20 @@ NuGet packages used:
 ```text
 netDxf 2022.11.2
 UglyToad.PdfPig 1.7.0-custom-5
+Velopack 1.2.0
 ```
 
 `UglyToad.PdfPig` currently has no plain stable release published (its maintainer transition is in progress) — the `-custom-5` prerelease is the best available and is what's pinned; revisit once a stable release resumes.
+
+## Publishing a release
+
+Releases are cut by pushing a semantic-version git tag; `.github/workflows/release.yml` picks it up, builds, packs the Velopack installer/update packages, and publishes a GitHub Release with all required assets.
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The tag must match `vX.Y.Z` (e.g. `v1.0.0`, `v1.1.0`, `v1.1.1`) — anything else is rejected by the workflow before it builds anything. The version baked into the app (and shown in **Help → About...**) is the tag with the leading `v` stripped.
+
+To re-run packaging/publishing for a tag that already exists (e.g. after fixing a failed workflow run) without pushing a new tag, trigger the workflow manually from the Actions tab (`workflow_dispatch`) and supply that tag in the `tag` input.

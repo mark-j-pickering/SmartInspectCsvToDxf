@@ -60,6 +60,11 @@ partial class MainForm
         _statusLabel = new ToolStripStatusLabel();
         _refreshTimer = new System.Windows.Forms.Timer(components);
         _fileListToolTip = new ToolTip(components);
+        _menuStrip = new MenuStrip();
+        _helpMenuItem = new ToolStripMenuItem();
+        _checkForUpdatesMenuItem = new ToolStripMenuItem();
+        _aboutMenuItem = new ToolStripMenuItem();
+        _menuStrip.SuspendLayout();
         _topPanel.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)_splitContainer).BeginInit();
         _splitContainer.Panel1.SuspendLayout();
@@ -351,20 +356,50 @@ partial class MainForm
         _statusLabel.Text = "Ready";
         // 
         // _refreshTimer
-        // 
+        //
         _refreshTimer.Interval = 350;
         _refreshTimer.Tick += RefreshTimer_Tick;
-        // 
+        //
+        // _menuStrip
+        //
+        _menuStrip.Items.AddRange(new ToolStripItem[] { _helpMenuItem });
+        _menuStrip.Location = new Point(0, 0);
+        _menuStrip.Name = "_menuStrip";
+        _menuStrip.Size = new Size(1204, 24);
+        _menuStrip.TabIndex = 3;
+        //
+        // _helpMenuItem
+        //
+        _helpMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _checkForUpdatesMenuItem, _aboutMenuItem });
+        _helpMenuItem.Name = "_helpMenuItem";
+        _helpMenuItem.Text = "&Help";
+        //
+        // _checkForUpdatesMenuItem
+        //
+        _checkForUpdatesMenuItem.Name = "_checkForUpdatesMenuItem";
+        _checkForUpdatesMenuItem.Text = "Check for Updates...";
+        _checkForUpdatesMenuItem.Click += CheckForUpdatesMenuItem_Click;
+        //
+        // _aboutMenuItem
+        //
+        _aboutMenuItem.Name = "_aboutMenuItem";
+        _aboutMenuItem.Text = "About...";
+        _aboutMenuItem.Click += AboutMenuItem_Click;
+        //
         // MainForm
-        // 
+        //
         ClientSize = new Size(1204, 781);
         Controls.Add(_splitContainer);
         Controls.Add(_topPanel);
         Controls.Add(_statusStrip);
+        Controls.Add(_menuStrip);
+        MainMenuStrip = _menuStrip;
         MinimumSize = new Size(980, 640);
         Name = "MainForm";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "SmartInspect CSV to DXF";
+        _menuStrip.ResumeLayout(false);
+        _menuStrip.PerformLayout();
         _topPanel.ResumeLayout(false);
         _topPanel.PerformLayout();
         _splitContainer.Panel1.ResumeLayout(false);
@@ -410,4 +445,8 @@ partial class MainForm
     private ToolStripStatusLabel _statusLabel;
     private System.Windows.Forms.Timer _refreshTimer;
     private ToolTip _fileListToolTip;
+    private MenuStrip _menuStrip;
+    private ToolStripMenuItem _helpMenuItem;
+    private ToolStripMenuItem _checkForUpdatesMenuItem;
+    private ToolStripMenuItem _aboutMenuItem;
 }
