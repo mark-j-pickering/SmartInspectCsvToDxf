@@ -106,8 +106,14 @@ public sealed class UpdateService
     private static bool IsPrereleaseOptInEnabled() =>
         Environment.GetEnvironmentVariable(AllowPrereleaseEnvironmentVariable) is "1" or "true";
 
+    // HttpRequestException.StatusCode is only set once a response actually arrived (a real
+    // HTTP error status, e.g. a 404 for a missing/inaccessible release asset) - null means
+    // the request never got a response at all (DNS failure, no route, TLS handshake failure
+    // etc.), which is the only case that's actually a connectivity problem.
     private static string DescribeError(Exception ex) => ex switch
     {
+        HttpRequestException { StatusCode: { } status } =>
+            $"GitHub returned an unexpected response ({(int)status} {status}) while checking for updates.",
         HttpRequestException => "Could not reach GitHub. Check your internet connection and try again.",
         TaskCanceledException or OperationCanceledException => "The update check timed out.",
         IOException => "A file error occurred while checking for updates.",
