@@ -4,7 +4,19 @@ Small WinForms utility for converting FARO CAM2 SmartInspect tabular report expo
 
 ## Installing
 
-Download the latest `Setup.exe` from [GitHub Releases](https://github.com/mark-j-pickering/SmartInspectCsvToDxf/releases) and run it. This installs the app for the current user and creates a Start Menu shortcut — use that shortcut for all future launches, since it's what carries the app forward through automatic updates.
+1. Go to the [latest release](https://github.com/mark-j-pickering/SmartInspectCsvToDxf/releases/latest).
+2. Under **Assets**, download `SmartInspectCsvToDxf-win-Setup.exe`.
+3. Run it. It installs the app for the current user, creates a Start Menu (and Desktop) shortcut, and registers an uninstall entry — no admin rights needed.
+4. Launch it from the Start Menu shortcut from then on, since that's what carries the app forward through automatic updates.
+
+Each release also lists a few other assets — these are **not** for manual download, they're consumed automatically by the installed app's own update check:
+
+| Asset | Purpose |
+|---|---|
+| `SmartInspectCsvToDxf-win-Setup.exe` | **The one to download** — installer |
+| `SmartInspectCsvToDxf-*-full.nupkg`, `-delta.nupkg` | Update payloads, fetched automatically when a newer version is available |
+| `releases.win.json`, `RELEASES` | Update feed metadata |
+| `SmartInspectCsvToDxf-*-portable-win-x64.zip` | Portable edition — see [below](#portable-version) |
 
 ### Migrating from an existing portable ZIP install
 
