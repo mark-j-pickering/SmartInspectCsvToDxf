@@ -9,6 +9,14 @@ public sealed class Feature
     public double Diameter { get; init; }
     public double Radius { get; init; }
 
+    // Set only for line features (e.g. a PDF report's "2D Line N" blocks), where the
+    // measured geometry is a segment between two actual points rather than a centre.
+    public double? X2 { get; init; }
+    public double? Y2 { get; init; }
+    public double? Z2 { get; init; }
+
+    public bool IsLine => X2.HasValue && Y2.HasValue;
+
     public Feature WithMirrorY()
     {
         return new Feature
@@ -18,7 +26,10 @@ public sealed class Feature
             Y = Y,
             Z = Z,
             Diameter = Diameter,
-            Radius = Radius
+            Radius = Radius,
+            X2 = X2.HasValue ? -X2.Value : null,
+            Y2 = Y2,
+            Z2 = Z2
         };
     }
 }
