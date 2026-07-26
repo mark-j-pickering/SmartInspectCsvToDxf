@@ -10,14 +10,15 @@ public static class SmartInspectPdfReportReader
     // (Center.x/y/z, Diameter, Radius) or data we deliberately ignore (Circularity,
     // Flatness, Straightness, the Readings sub-table, the actual/nominal/dev header
     // row, the standalone "Properties" sub-heading some report templates print under
-    // every feature name, or a "Solver method:"/"Nr. of readings:" line that renders
-    // far enough from the feature name to land in its own row) - anything else that
+    // every feature name, the "x (mm) y (mm) z (mm) ..." column-header row under
+    // "Readings", or a "Solver method:"/"Nr. of readings:" line that renders far
+    // enough from the feature name to land in its own row) - anything else that
     // starts with a letter is a feature/section name row.
     private static readonly HashSet<string> RecognizedRowKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
         "actual", "center.x", "center.y", "center.z", "diameter", "radius",
         "circularity", "flatness", "straightness", "readings", "properties",
-        "solver", "nr."
+        "solver", "nr.", "x"
     };
 
     private const double RowTolerance = 6.0;
@@ -34,9 +35,23 @@ public static class SmartInspectPdfReportReader
         double? diameter = null;
         double? radius = null;
 
+        // Line features (e.g. "2D Line N") have no Center.x/y at all - their geometry is
+        // the segment between two measured points instead, printed as separate "Readings"
+        // rows: a data row that echoes the feature's own name + "-" + x/y/z, immediately
+        // followed by a standalone "ActualPtN" label row (offset enough vertically that it
+        // never merges into the same row). Plane features use the same ActualPt1/2/3
+        // layout but with three points, so only exactly two points is treated as a line.
+        (double X, double Y, double Z)? point1 = null;
+        (double X, double Y, double Z)? point2 = null;
+        (double X, double Y, double Z)? point3 = null;
+        (double X, double Y, double Z)? pendingPoint = null;
+
         void FlushCurrent()
         {
-            if (currentName is not null && centerX.HasValue && centerY.HasValue)
+            if (currentName is null)
+                return;
+
+            if (centerX.HasValue && centerY.HasValue)
             {
                 double r, d;
                 if (radius.HasValue)
@@ -65,6 +80,19 @@ public static class SmartInspectPdfReportReader
                     Radius = r
                 });
             }
+            else if (point1.HasValue && point2.HasValue && !point3.HasValue)
+            {
+                features.Add(new Feature
+                {
+                    Name = currentName,
+                    X = point1.Value.X,
+                    Y = point1.Value.Y,
+                    Z = point1.Value.Z,
+                    X2 = point2.Value.X,
+                    Y2 = point2.Value.Y,
+                    Z2 = point2.Value.Z
+                });
+            }
         }
 
         for (var pageNumber = 1; pageNumber <= document.NumberOfPages; pageNumber++)
@@ -75,12 +103,69 @@ public static class SmartInspectPdfReportReader
             {
                 var firstWord = row[0].Text;
 
-                if (!RecognizedRowKeywords.Contains(firstWord) && firstWord.Length > 0 && char.IsLetter(firstWord[0]))
+                // "ActualPtN" is its own standalone row (offset far enough from the numeric
+                // reading above it that row-grouping never merges them) - assign whatever
+                // point was captured from that preceding data row into the matching slot.
+                // Must be checked before the new-feature-name test below, since "ActualPt1"
+                // otherwise looks exactly like the start of a new feature/section name.
+                if (firstWord.StartsWith("ActualPt", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (pendingPoint.HasValue)
+                    {
+                        var slot = firstWord.Substring("ActualPt".Length);
+                        switch (slot)
+                        {
+                            case "1": point1 = pendingPoint; break;
+                            case "2": point2 = pendingPoint; break;
+                            case "3": point3 = pendingPoint; break;
+                        }
+                        pendingPoint = null;
+                    }
+                    continue;
+                }
+
+                // A feature/section name row starts with a letter (e.g. "Circle 3", "World")
+                // or, for line features, the "2D"/"3D" dimension prefix (e.g. "2D Line 8").
+                // Reading-echo rows for those same line/plane features repeat the name
+                // followed by a literal "-" (e.g. "2D Line 8 - 2.941 -2.436 ..."), so a
+                // "-" anywhere in the row rules out a name-row match - without that check,
+                // "2D"/"3D"-prefixed reading rows would be misread as new feature names and
+                // wipe out the very name they're supposed to be attributed to.
+                var looksLikeNameStart = firstWord.Length > 0
+                    && !RecognizedRowKeywords.Contains(firstWord)
+                    && (char.IsLetter(firstWord[0]) || firstWord is "2D" or "3D")
+                    && !row.Any(w => w.Text == "-");
+
+                if (looksLikeNameStart)
                 {
                     FlushCurrent();
                     currentName = BuildFeatureName(row);
                     centerX = centerY = centerZ = diameter = radius = null;
+                    point1 = point2 = point3 = pendingPoint = null;
                     continue;
+                }
+
+                // A reading row for a line/plane feature echoes the feature's own name,
+                // then "-", then its x/y/z for this particular actual point (see ActualPtN
+                // handling above). Detected by prefix match rather than a keyword, since the
+                // leading words are the feature name itself, not a fixed label.
+                if (currentName is not null)
+                {
+                    var dashIndex = row.FindIndex(w => w.Text == "-");
+                    if (dashIndex > 0 && dashIndex < row.Count - 1)
+                    {
+                        var prefix = string.Join(" ", row.Take(dashIndex).Select(w => w.Text));
+                        if (string.Equals(prefix, currentName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var rest = row.Skip(dashIndex + 1).ToList();
+                            var px = rest.Count > 0 ? ReportValueParser.ParseLeadingNumber(rest[0].Text) : null;
+                            var py = rest.Count > 1 ? ReportValueParser.ParseLeadingNumber(rest[1].Text) : null;
+                            var pz = rest.Count > 2 ? ReportValueParser.ParseLeadingNumber(rest[2].Text) : null;
+                            if (px.HasValue && py.HasValue)
+                                pendingPoint = (px.Value, py.Value, pz ?? 0.0);
+                            continue;
+                        }
+                    }
                 }
 
                 if (row.Count < 2 || currentName is null)

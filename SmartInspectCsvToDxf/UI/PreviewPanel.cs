@@ -124,14 +124,21 @@ public sealed class PreviewPanel : Panel
             .Select(f =>
             {
                 var (u, v, _) = DrawingPlaneMapper.Project(f, _drawingPlane);
-                return (Feature: f, U: u, V: v);
+                double? u2 = null, v2 = null;
+                if (f.IsLine)
+                {
+                    var (lu, lv, _) = DrawingPlaneMapper.Project(f.X2!.Value, f.Y2!.Value, f.Z2 ?? 0.0, _drawingPlane);
+                    u2 = lu;
+                    v2 = lv;
+                }
+                return (Feature: f, U: u, V: v, U2: u2, V2: v2);
             })
             .ToList();
 
-        var minX = projected.Min(p => p.U - p.Feature.Radius);
-        var maxX = projected.Max(p => p.U + p.Feature.Radius);
-        var minY = projected.Min(p => p.V - p.Feature.Radius);
-        var maxY = projected.Max(p => p.V + p.Feature.Radius);
+        var minX = projected.Min(p => Math.Min(p.U - p.Feature.Radius, p.U2 - p.Feature.Radius ?? p.U));
+        var maxX = projected.Max(p => Math.Max(p.U + p.Feature.Radius, p.U2 + p.Feature.Radius ?? p.U));
+        var minY = projected.Min(p => Math.Min(p.V - p.Feature.Radius, p.V2 - p.Feature.Radius ?? p.V));
+        var maxY = projected.Max(p => Math.Max(p.V + p.Feature.Radius, p.V2 + p.Feature.Radius ?? p.V));
 
         var rangeX = Math.Max(maxX - minX, 1.0);
         var rangeY = Math.Max(maxY - minY, 1.0);
@@ -156,6 +163,7 @@ public sealed class PreviewPanel : Panel
         using var gridPen = new Pen(Color.FromArgb(235, 235, 235), 1);
         using var axisPen = new Pen(Color.FromArgb(120, 120, 120), 1);
         using var circlePen = new Pen(Color.FromArgb(25, 90, 160), 1.4f);
+        using var linePen = new Pen(Color.FromArgb(160, 60, 25), 1.4f);
         using var pointBrush = new SolidBrush(Color.FromArgb(20, 20, 20));
         using var textBrush = new SolidBrush(Color.FromArgb(40, 40, 40));
 
@@ -165,6 +173,24 @@ public sealed class PreviewPanel : Panel
         foreach (var p in projected)
         {
             var centre = ToScreen(p.U, p.V);
+
+            if (p.Feature.IsLine)
+            {
+                var end = ToScreen(p.U2!.Value, p.V2!.Value);
+                g.DrawLine(linePen, centre, end);
+                g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
+                g.FillEllipse(pointBrush, end.X - 2.2f, end.Y - 2.2f, 4.4f, 4.4f);
+
+                if (_showText)
+                {
+                    var midX = (centre.X + end.X) / 2f;
+                    var midY = (centre.Y + end.Y) / 2f;
+                    g.DrawString(p.Feature.Name, Font, textBrush, midX + 4f, midY - 4f - Font.Height);
+                }
+
+                continue;
+            }
+
             var r = ToScreenLength(p.Feature.Radius);
             g.DrawEllipse(circlePen, centre.X - r, centre.Y - r, r * 2, r * 2);
             g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);

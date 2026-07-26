@@ -23,15 +23,35 @@ public static class DxfExporter
         var circlesLayer = new Layer("FEATURE_CIRCLES");
         var centresLayer = new Layer("FEATURE_CENTRES");
         var labelsLayer = new Layer("FEATURE_LABELS");
+        var linesLayer = new Layer("FEATURE_LINES");
 
         doc.Layers.Add(circlesLayer);
         doc.Layers.Add(centresLayer);
         doc.Layers.Add(labelsLayer);
+        doc.Layers.Add(linesLayer);
 
         foreach (var f in features)
         {
             var (u, v, elevation) = DrawingPlaneMapper.Project(f, plane);
             var centre = new Vector3(u, v, elevation);
+
+            if (f.IsLine)
+            {
+                var (u2, v2, elevation2) = DrawingPlaneMapper.Project(f.X2!.Value, f.Y2!.Value, f.Z2 ?? 0.0, plane);
+                var end = new Vector3(u2, v2, elevation2);
+
+                doc.Entities.Add(new Line(centre, end) { Layer = linesLayer });
+
+                var midU = (u + u2) / 2.0;
+                var midV = (v + v2) / 2.0;
+                var midElevation = (elevation + elevation2) / 2.0;
+                var lineLabel = new Text(f.Name, new Vector3(midU, midV + 3.0, midElevation), 2.5)
+                {
+                    Layer = labelsLayer
+                };
+                doc.Entities.Add(lineLabel);
+                continue;
+            }
 
             // Centre-only points (no Diameter/Radius in the source report) have Radius 0 -
             // netDxf's Circle requires a positive radius, so skip it and fall back to just

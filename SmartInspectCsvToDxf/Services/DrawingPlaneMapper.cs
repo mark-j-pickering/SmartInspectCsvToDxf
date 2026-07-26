@@ -8,12 +8,16 @@ public static class DrawingPlaneMapper
     // two axes laid out on the drawing (screen X/Y in the preview, entity X/Y in the
     // DXF); Elevation is the dropped axis, carried through unchanged (matches the
     // app's existing behavior of using Center.z as a literal DXF elevation).
-    public static (double U, double V, double Elevation) Project(Feature feature, DrawingPlane plane) => plane switch
+    public static (double U, double V, double Elevation) Project(Feature feature, DrawingPlane plane) =>
+        Project(feature.X, feature.Y, feature.Z, plane);
+
+    // Overload for a line feature's second point (Feature.X2/Y2/Z2), which isn't its own Feature.
+    public static (double U, double V, double Elevation) Project(double x, double y, double z, DrawingPlane plane) => plane switch
     {
-        DrawingPlane.XY => (feature.X, feature.Y, feature.Z),
-        DrawingPlane.XZ => (feature.X, feature.Z, feature.Y),
-        DrawingPlane.YZ => (feature.Y, feature.Z, feature.X),
-        _ => (feature.X, feature.Y, feature.Z)
+        DrawingPlane.XY => (x, y, z),
+        DrawingPlane.XZ => (x, z, y),
+        DrawingPlane.YZ => (y, z, x),
+        _ => (x, y, z)
     };
 
     public static (string U, string V) AxisLabels(DrawingPlane plane) => plane switch

@@ -13,9 +13,9 @@ public static class DrawingPlaneDetector
         if (features.Count == 0)
             return DrawingPlane.XY;
 
-        var rangeX = Range(features.Select(f => f.X));
-        var rangeY = Range(features.Select(f => f.Y));
-        var rangeZ = Range(features.Select(f => f.Z));
+        var rangeX = Range(features.SelectMany(f => f.X2.HasValue ? [f.X, f.X2.Value] : new[] { f.X }));
+        var rangeY = Range(features.SelectMany(f => f.Y2.HasValue ? [f.Y, f.Y2.Value] : new[] { f.Y }));
+        var rangeZ = Range(features.SelectMany(f => f.Z2.HasValue ? [f.Z, f.Z2.Value] : new[] { f.Z }));
 
         if (rangeZ <= rangeX && rangeZ <= rangeY)
             return DrawingPlane.XY;
