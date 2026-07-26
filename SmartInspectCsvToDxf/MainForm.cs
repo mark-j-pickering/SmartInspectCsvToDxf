@@ -441,12 +441,14 @@ public sealed partial class MainForm : Form
         }
     }
 
-    private void LoadSelectedReport()
+    private async void LoadSelectedReport()
     {
         if (_fileListBox.SelectedItem is not ReportFileItem item)
             return;
 
-        LoadReport(item.FullPath, showErrors: true);
+        // Explicit, user-driven selection: show a progress dialog and read off the UI
+        // thread, since PDF reports can take a moment to parse.
+        await LoadReportAsync(item.FullPath, showErrors: true, showProgress: true);
 
         // Move focus to the preview so the arrow keys immediately drive the drawing-
         // plane override, without requiring an extra click. Only on this explicit,
@@ -455,20 +457,34 @@ public sealed partial class MainForm : Form
         _previewPanel.Focus();
     }
 
-    private void ReloadCurrentReportIfStillPresent()
+    private async void ReloadCurrentReportIfStillPresent()
     {
         if (_currentReportPath is null || !File.Exists(_currentReportPath))
             return;
 
-        LoadReport(_currentReportPath, showErrors: false);
+        // Automatic file-watcher reload: no progress dialog, matches prior silent behavior.
+        await LoadReportAsync(_currentReportPath, showErrors: false, showProgress: false);
     }
 
-    private void LoadReport(string path, bool showErrors)
+    private async Task LoadReportAsync(string path, bool showErrors, bool showProgress)
     {
+        ProgressDialog? progress = null;
+        if (showProgress)
+        {
+            progress = new ProgressDialog("Loading report", 1);
+            progress.ReportProgress(1, 1, Path.GetFileName(path));
+            progress.Show(this);
+            // Give the dialog a moment to actually be seen - a small report reads fast
+            // enough that it would otherwise flash and close before it's visible.
+            await Task.Delay(500);
+        }
+
         try
         {
             _currentReportPath = path;
-            _currentFeatures = ReportFileReader.Read(path);
+            _currentFeatures = showProgress
+                ? await Task.Run(() => ReportFileReader.Read(path))
+                : ReportFileReader.Read(path);
             RefreshPreview();
             UpdateExportButtons();
             _statusLabel.Text = $"Loaded {Path.GetFileName(path)} — {_currentFeatures.Count} features";
@@ -488,6 +504,11 @@ public sealed partial class MainForm : Form
             if (showErrors)
                 MessageBox.Show(this, ex.Message, "Report load error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+        finally
+        {
+            progress?.Close();
+            progress?.Dispose();
+        }
     }
 
     private void RefreshPreview()
@@ -504,7 +525,7 @@ public sealed partial class MainForm : Form
         _exportUsbButton.Text = count > 1 ? $"Write to USB ({count})" : "Write to USB";
     }
 
-    private void ExportDxfToConfiguredFolder(string folder, string targetName)
+    private async void ExportDxfToConfiguredFolder(string folder, string targetName)
     {
         var items = _fileListBox.SelectedItems.Cast<ReportFileItem>().ToList();
         if (items.Count == 0)
@@ -517,35 +538,73 @@ public sealed partial class MainForm : Form
         }
 
         var exported = new List<string>();
+        var skipped = new List<string>();
         var failures = new List<(string File, string Error)>();
 
-        foreach (var item in items)
+        _exportButton.Enabled = false;
+        _exportUsbButton.Enabled = false;
+
+        using var progress = new ProgressDialog("Exporting DXF", items.Count);
+        progress.Show(this);
+        // Give the dialog a moment to actually be seen — a single small report reads and
+        // exports fast enough that it would otherwise flash and close before it's visible.
+        await Task.Delay(500);
+        try
         {
-            try
+            for (var i = 0; i < items.Count; i++)
             {
-                var features = ReportFileReader.Read(item.FullPath);
-                if (features.Count == 0)
+                var item = items[i];
+                var fileName = Path.GetFileName(item.FullPath);
+                progress.ReportProgress(i + 1, items.Count, fileName);
+
+                try
                 {
-                    failures.Add((Path.GetFileName(item.FullPath), "No valid features found"));
-                    continue;
+                    var outputPath = BuildOutputPath(folder, item.FullPath);
+                    if (File.Exists(outputPath))
+                    {
+                        var overwrite = MessageBox.Show(
+                            this,
+                            $"{Path.GetFileName(outputPath)} already exists.\n\nDo you want to replace it?",
+                            "Confirm Save As",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning);
+
+                        if (overwrite != DialogResult.Yes)
+                        {
+                            skipped.Add(fileName);
+                            continue;
+                        }
+                    }
+
+                    var features = await Task.Run(() => ReportFileReader.Read(item.FullPath));
+                    if (features.Count == 0)
+                    {
+                        failures.Add((fileName, "No valid features found"));
+                        continue;
+                    }
+
+                    // Only the file currently shown in the preview can have a manual plane
+                    // override attached to it; every other file in the batch (and this one,
+                    // if the plane is still auto-detected) gets its own auto-detected plane.
+                    DrawingPlane? plane = _previewPanel.IsPlaneOverridden
+                        && string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase)
+                            ? _previewPanel.DrawingPlane
+                            : null;
+
+                    var mirror = _mirrorCheckBox.Checked;
+                    await Task.Run(() => DxfExporter.Export(outputPath, features, mirror, plane));
+                    exported.Add(Path.GetFileName(outputPath));
                 }
-
-                // Only the file currently shown in the preview can have a manual plane
-                // override attached to it; every other file in the batch (and this one,
-                // if the plane is still auto-detected) gets its own auto-detected plane.
-                DrawingPlane? plane = _previewPanel.IsPlaneOverridden
-                    && string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase)
-                        ? _previewPanel.DrawingPlane
-                        : null;
-
-                var outputPath = BuildOutputPath(folder, item.FullPath);
-                DxfExporter.Export(outputPath, features, _mirrorCheckBox.Checked, plane);
-                exported.Add(Path.GetFileName(outputPath));
+                catch (Exception ex)
+                {
+                    failures.Add((fileName, ex.Message));
+                }
             }
-            catch (Exception ex)
-            {
-                failures.Add((Path.GetFileName(item.FullPath), ex.Message));
-            }
+        }
+        finally
+        {
+            progress.Close();
+            UpdateExportButtons();
         }
 
         _statusLabel.Text = failures.Count == 0
@@ -557,6 +616,15 @@ public sealed partial class MainForm : Form
         {
             summary.AppendLine($"Exported {exported.Count} file(s):");
             summary.AppendLine(string.Join(Environment.NewLine, exported));
+        }
+
+        if (skipped.Count > 0)
+        {
+            if (summary.Length > 0)
+                summary.AppendLine();
+
+            summary.AppendLine($"Skipped ({skipped.Count}):");
+            summary.AppendLine(string.Join(Environment.NewLine, skipped));
         }
 
         if (failures.Count > 0)
@@ -583,12 +651,7 @@ public sealed partial class MainForm : Form
         if (_mirrorCheckBox.Checked)
             defaultName += "_mirrored_y";
 
-        var path = Path.Combine(folder, defaultName + ".dxf");
-        if (!File.Exists(path))
-            return path;
-
-        var stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        return Path.Combine(folder, $"{defaultName}_{stamp}.dxf");
+        return Path.Combine(folder, defaultName + ".dxf");
     }
 
     private sealed class ReportFileItem
