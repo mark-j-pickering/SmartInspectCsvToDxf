@@ -41,7 +41,17 @@ public sealed class AppSettings
         {
             Directory.CreateDirectory(SettingsDirectory);
             var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(SettingsPath, json);
+
+            // Write-then-rename instead of writing SettingsPath directly: File.WriteAllText
+            // truncates the destination before writing its new content, so a second process
+            // reading the file at exactly the wrong moment (e.g. two copies of the app
+            // launched at once) can catch it mid-truncation and silently fall back to blank
+            // defaults in Load()'s catch block. File.Move onto an existing path is a single
+            // atomic rename - a concurrent reader always sees either the old file or the new
+            // one in full, never a partial write.
+            var tempPath = SettingsPath + ".tmp";
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, SettingsPath, overwrite: true);
             return true;
         }
         catch

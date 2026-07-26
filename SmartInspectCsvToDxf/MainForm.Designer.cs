@@ -97,10 +97,10 @@ partial class MainForm
         _topPanel.Name = "_topPanel";
         _topPanel.Padding = new Padding(8);
         _topPanel.RowCount = 3;
-        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-        _topPanel.Size = new Size(1204, 104);
+        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+        _topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+        _topPanel.Size = new Size(1204, 136);
         _topPanel.TabIndex = 1;
         // 
         // _csvFolderLabel

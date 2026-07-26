@@ -41,11 +41,29 @@ public sealed class AppSettingsTests : IDisposable
         Assert.Equal(settings.MirrorAboutYAxis, loaded.MirrorAboutYAxis);
     }
 
+    [Fact]
+    public void Save_LeavesNoTempFileBehind()
+    {
+        // Save() writes to a ".tmp" sibling and renames it onto settings.json (a single
+        // atomic rename, so a concurrent Load() from a second instance of the app can
+        // never observe a truncated/partial file) - confirm that temp file doesn't linger.
+        var settings = new AppSettings { InputFolder = @"C:\Reports\In" };
+
+        Assert.True(settings.Save());
+
+        Assert.False(File.Exists(SettingsPath + ".tmp"));
+        Assert.True(File.Exists(SettingsPath));
+    }
+
     public void Dispose()
     {
         if (_backup is not null)
             File.WriteAllText(SettingsPath, _backup);
         else if (File.Exists(SettingsPath))
             File.Delete(SettingsPath);
+
+        var tempPath = SettingsPath + ".tmp";
+        if (File.Exists(tempPath))
+            File.Delete(tempPath);
     }
 }

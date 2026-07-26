@@ -447,6 +447,12 @@ public sealed partial class MainForm : Form
             return;
 
         LoadReport(item.FullPath, showErrors: true);
+
+        // Move focus to the preview so the arrow keys immediately drive the drawing-
+        // plane override, without requiring an extra click. Only on this explicit,
+        // user-driven selection - not on the file-watcher's automatic reloads (see
+        // ReloadCurrentReportIfStillPresent), where stealing focus would be disruptive.
+        _previewPanel.Focus();
     }
 
     private void ReloadCurrentReportIfStillPresent()
@@ -524,8 +530,16 @@ public sealed partial class MainForm : Form
                     continue;
                 }
 
+                // Only the file currently shown in the preview can have a manual plane
+                // override attached to it; every other file in the batch (and this one,
+                // if the plane is still auto-detected) gets its own auto-detected plane.
+                DrawingPlane? plane = _previewPanel.IsPlaneOverridden
+                    && string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase)
+                        ? _previewPanel.DrawingPlane
+                        : null;
+
                 var outputPath = BuildOutputPath(folder, item.FullPath);
-                DxfExporter.Export(outputPath, features, _mirrorCheckBox.Checked);
+                DxfExporter.Export(outputPath, features, _mirrorCheckBox.Checked, plane);
                 exported.Add(Path.GetFileName(outputPath));
             }
             catch (Exception ex)

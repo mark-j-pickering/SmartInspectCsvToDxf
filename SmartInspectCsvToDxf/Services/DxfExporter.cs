@@ -7,11 +7,16 @@ namespace SmartInspectCsvToDxf.Services;
 
 public static class DxfExporter
 {
-    public static void Export(string outputPath, IEnumerable<Feature> inputFeatures, bool mirrorAboutYAxis)
+    // drawingPlane: null means auto-detect from this file's own features (same rule
+    // PreviewPanel uses by default). Pass an explicit plane to honor a manual override
+    // the user made in the preview for this specific file.
+    public static void Export(string outputPath, IEnumerable<Feature> inputFeatures, bool mirrorAboutYAxis, DrawingPlane? drawingPlane = null)
     {
         var features = mirrorAboutYAxis
             ? inputFeatures.Select(f => f.WithMirrorY()).ToList()
             : inputFeatures.ToList();
+
+        var plane = drawingPlane ?? DrawingPlaneDetector.Detect(features);
 
         var doc = new DxfDocument();
 
@@ -25,7 +30,8 @@ public static class DxfExporter
 
         foreach (var f in features)
         {
-            var centre = new Vector3(f.X, f.Y, f.Z);
+            var (u, v, elevation) = DrawingPlaneMapper.Project(f, plane);
+            var centre = new Vector3(u, v, elevation);
 
             // Centre-only points (no Diameter/Radius in the source report) have Radius 0 -
             // netDxf's Circle requires a positive radius, so skip it and fall back to just
@@ -42,19 +48,19 @@ public static class DxfExporter
             // Small centre cross using two short lines.
             var crossSize = Math.Max(f.Radius * 0.08, 1.0);
             doc.Entities.Add(new Line(
-                new Vector3(f.X - crossSize, f.Y, f.Z),
-                new Vector3(f.X + crossSize, f.Y, f.Z))
+                new Vector3(u - crossSize, v, elevation),
+                new Vector3(u + crossSize, v, elevation))
             { Layer = centresLayer });
             doc.Entities.Add(new Line(
-                new Vector3(f.X, f.Y - crossSize, f.Z),
-                new Vector3(f.X, f.Y + crossSize, f.Z))
+                new Vector3(u, v - crossSize, elevation),
+                new Vector3(u, v + crossSize, elevation))
             { Layer = centresLayer });
 
             var labelOffset = Math.Max(f.Radius * 0.12, 3.0);
             var labelHeight = Math.Max(f.Radius * 0.18, 2.5);
             var text = new Text(
                 f.Name,
-                new Vector3(f.X + labelOffset, f.Y + labelOffset, f.Z),
+                new Vector3(u + labelOffset, v + labelOffset, elevation),
                 labelHeight)
             {
                 Layer = labelsLayer
