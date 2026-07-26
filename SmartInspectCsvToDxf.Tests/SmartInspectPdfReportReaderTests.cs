@@ -49,6 +49,38 @@ public sealed class SmartInspectPdfReportReaderTests
     }
 
     [Fact]
+    public void Read_LineFeaturesReport_ExtractsLinesAlongsideCircles()
+    {
+        // Real export containing "2D Line N" (Straightness) features, whose geometry is a
+        // segment between two measured points (ActualPt1/ActualPt2) rather than a centre -
+        // unlike Plane features (which use the same ActualPt1/2/3 layout but with three
+        // points), these should be placed as lines, not skipped.
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "lineFeaturesReport.pdf");
+
+        var features = SmartInspectPdfReportReader.Read(path);
+
+        Assert.Equal(41, features.Count);
+
+        var lines = features.Where(f => f.IsLine).ToList();
+        Assert.Equal(8, lines.Count);
+        Assert.All(lines, f => Assert.StartsWith("2D Line ", f.Name));
+
+        var line8 = Assert.Single(lines, f => f.Name == "2D Line 8");
+        Assert.Equal(2.941, line8.X, 3);
+        Assert.Equal(-2.436, line8.Y, 3);
+        Assert.Equal(0, line8.Z, 3);
+        Assert.Equal(10.828, line8.X2!.Value, 3);
+        Assert.Equal(-8.969, line8.Y2!.Value, 3);
+        Assert.Equal(0, line8.Z2!.Value, 3);
+        Assert.Equal(0, line8.Diameter, 3);
+        Assert.Equal(0, line8.Radius, 3);
+
+        var circles = features.Where(f => !f.IsLine).ToList();
+        Assert.Equal(33, circles.Count);
+        Assert.DoesNotContain(circles, f => f.Name.StartsWith("2D Line") || f.Name.StartsWith("3D Line"));
+    }
+
+    [Fact]
     public void Read_CardStyleReport_ExtractsNamesWithoutTemplateHeaderText()
     {
         // Newer report template: each feature name is followed by a standalone
