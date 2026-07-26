@@ -125,15 +125,20 @@ public static class SmartInspectPdfReportReader
                 }
 
                 // A feature/section name row starts with a letter (e.g. "Circle 3", "World")
-                // or, for line features, the "2D"/"3D" dimension prefix (e.g. "2D Line 8").
-                // Reading-echo rows for those same line/plane features repeat the name
-                // followed by a literal "-" (e.g. "2D Line 8 - 2.941 -2.436 ..."), so a
-                // "-" anywhere in the row rules out a name-row match - without that check,
-                // "2D"/"3D"-prefixed reading rows would be misread as new feature names and
-                // wipe out the very name they're supposed to be attributed to.
+                // or, for line features, a digit-led type prefix like "2D"/"3D" ("2D Line 8").
+                // Rather than hardcode every possible prefix, also recognize the row by the
+                // "Solver method: Standard   Nr. of readings: N" template text that renders
+                // alongside the name (the same "Solver"/"Nr." markers BuildFeatureName already
+                // trims off) - that text is unique to name rows, so its presence identifies a
+                // new feature regardless of what the type prefix looks like.
+                // Reading-echo rows for line/plane features repeat the name followed by a
+                // literal "-" (e.g. "2D Line 8 - 2.941 -2.436 ..."), so a "-" anywhere in the
+                // row rules out a name-row match - without that check, those rows would be
+                // misread as new feature names and wipe out the name they belong to.
+                var hasNameRowMarker = row.Any(w => w.Text is "Solver" or "Nr.");
                 var looksLikeNameStart = firstWord.Length > 0
                     && !RecognizedRowKeywords.Contains(firstWord)
-                    && (char.IsLetter(firstWord[0]) || firstWord is "2D" or "3D")
+                    && (char.IsLetter(firstWord[0]) || firstWord is "2D" or "3D" || hasNameRowMarker)
                     && !row.Any(w => w.Text == "-");
 
                 if (looksLikeNameStart)
@@ -147,24 +152,26 @@ public static class SmartInspectPdfReportReader
 
                 // A reading row for a line/plane feature echoes the feature's own name,
                 // then "-", then its x/y/z for this particular actual point (see ActualPtN
-                // handling above). Detected by prefix match rather than a keyword, since the
-                // leading words are the feature name itself, not a fixed label.
+                // handling above). Detected structurally (a literal "-" token followed by
+                // parseable numbers) rather than by matching the echoed prefix text against
+                // currentName - the name is user-editable in SmartInspect (renamed features
+                // are common, e.g. "RIGHT DOWL"/"CENTER-BORE" elsewhere in this same report),
+                // so a text-equality check would silently stop working the moment a line
+                // feature is renamed to anything not matching exactly. What actually
+                // determines a feature's type is its Properties block (Center.x/Diameter for
+                // a circle, Straightness for a line) - name text is irrelevant to that.
                 if (currentName is not null)
                 {
                     var dashIndex = row.FindIndex(w => w.Text == "-");
                     if (dashIndex > 0 && dashIndex < row.Count - 1)
                     {
-                        var prefix = string.Join(" ", row.Take(dashIndex).Select(w => w.Text));
-                        if (string.Equals(prefix, currentName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            var rest = row.Skip(dashIndex + 1).ToList();
-                            var px = rest.Count > 0 ? ReportValueParser.ParseLeadingNumber(rest[0].Text) : null;
-                            var py = rest.Count > 1 ? ReportValueParser.ParseLeadingNumber(rest[1].Text) : null;
-                            var pz = rest.Count > 2 ? ReportValueParser.ParseLeadingNumber(rest[2].Text) : null;
-                            if (px.HasValue && py.HasValue)
-                                pendingPoint = (px.Value, py.Value, pz ?? 0.0);
-                            continue;
-                        }
+                        var rest = row.Skip(dashIndex + 1).ToList();
+                        var px = rest.Count > 0 ? ReportValueParser.ParseLeadingNumber(rest[0].Text) : null;
+                        var py = rest.Count > 1 ? ReportValueParser.ParseLeadingNumber(rest[1].Text) : null;
+                        var pz = rest.Count > 2 ? ReportValueParser.ParseLeadingNumber(rest[2].Text) : null;
+                        if (px.HasValue && py.HasValue)
+                            pendingPoint = (px.Value, py.Value, pz ?? 0.0);
+                        continue;
                     }
                 }
 
