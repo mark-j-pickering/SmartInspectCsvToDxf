@@ -19,6 +19,7 @@ public sealed partial class MainForm : Form
         InitializeComponent();
 
         _settings = AppSettings.Load();
+        ApplyDefaultFoldersIfMissing();
         _updateService = new UpdateService(new UpdateDiagnosticLog());
 
         _mirrorCheckBox.Checked = _settings.MirrorAboutYAxis;
@@ -34,6 +35,49 @@ public sealed partial class MainForm : Form
         }
 
         Shown += MainForm_Shown;
+    }
+
+    // First-run convenience: SmartInspect itself creates this folder layout under the
+    // current user's Documents, so defaulting to it (and creating it if a fresh install
+    // hasn't yet) saves having to browse manually before the app is usable.
+    private void ApplyDefaultFoldersIfMissing()
+    {
+        var changed = false;
+        var baseFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "CAM2 SmartInspect 1.2");
+
+        if (string.IsNullOrWhiteSpace(_settings.InputFolder))
+        {
+            _settings.InputFolder = Path.Combine(baseFolder, "My Reports");
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settings.OutputFolder))
+        {
+            _settings.OutputFolder = Path.Combine(baseFolder, "My Exports");
+            changed = true;
+        }
+
+        if (!changed)
+            return;
+
+        TryCreateDirectory(_settings.InputFolder);
+        TryCreateDirectory(_settings.OutputFolder);
+        _settings.Save();
+    }
+
+    private static void TryCreateDirectory(string path)
+    {
+        try
+        {
+            Directory.CreateDirectory(path);
+        }
+        catch
+        {
+            // Best-effort default — if creation fails (permissions, etc.), the existing
+            // Directory.Exists checks elsewhere surface "folder not found" instead of crashing startup.
+        }
     }
 
     private async void MainForm_Shown(object? sender, EventArgs e)
@@ -127,7 +171,45 @@ public sealed partial class MainForm : Form
 
     private void ShowTextCheckBox_CheckedChanged(object? sender, EventArgs e) => RefreshPreview();
 
-    private void ExportUsbButton_Click(object? sender, EventArgs e) => ExportDxfToConfiguredFolder(_usbFolderTextBox.Text, "USB");
+    private void ExportUsbButton_Click(object? sender, EventArgs e)
+    {
+        var folder = ResolveUsbFolder();
+        if (folder is null)
+            return;
+
+        ExportDxfToConfiguredFolder(folder, "USB");
+    }
+
+    // USB drive letters aren't stable between insertions, so a saved UsbFolder path can go
+    // stale as soon as the drive is unplugged. If the configured folder isn't currently
+    // reachable, fall back to auto-detecting a single removable drive rather than making the
+    // user re-browse every time; ambiguous cases (none or several plugged in) still require
+    // a manual choice via Browse.
+    private string? ResolveUsbFolder()
+    {
+        var configured = _usbFolderTextBox.Text.Trim();
+        if (!string.IsNullOrWhiteSpace(configured) && Directory.Exists(configured))
+            return configured;
+
+        var removableDrives = DriveInfo.GetDrives()
+            .Where(d => d.DriveType == DriveType.Removable && d.IsReady)
+            .ToList();
+
+        if (removableDrives.Count == 1)
+        {
+            var detected = removableDrives[0].RootDirectory.FullName;
+            _usbFolderTextBox.Text = detected;
+            SaveSettings();
+            return detected;
+        }
+
+        var message = removableDrives.Count == 0
+            ? "No USB drive detected. Plug one in, or choose a folder manually with Browse."
+            : "Multiple USB drives detected. Please choose the correct one manually with Browse.";
+
+        MessageBox.Show(this, message, "USB drive not detected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return null;
+    }
 
     private void ExportButton_Click(object? sender, EventArgs e) => ExportDxfToConfiguredFolder(_outputFolderTextBox.Text, "DXF output");
 
@@ -463,6 +545,12 @@ public sealed partial class MainForm : Form
     {
         public ReportFileItem(string fullPath) => FullPath = fullPath;
         public string FullPath { get; }
-        public override string ToString() => Path.GetFileName(FullPath);
+
+        public override string ToString()
+        {
+            var name = Path.GetFileNameWithoutExtension(FullPath);
+            var extension = Path.GetExtension(FullPath).TrimStart('.').ToUpperInvariant();
+            return extension.Length == 0 ? name : $"{name}  [{extension}]";
+        }
     }
 }
