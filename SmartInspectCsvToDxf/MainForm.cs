@@ -7,6 +7,10 @@ namespace SmartInspectCsvToDxf;
 
 public sealed partial class MainForm : Form
 {
+    private const int MinFileListWidth = 250;
+    private const int FileListWidthPadding = 50;
+    private const int MinPreviewWidth = 400;
+
     private readonly AppSettings _settings;
     private readonly UpdateService _updateService;
     private readonly List<FileSystemWatcher> _watchers = [];
@@ -384,7 +388,39 @@ public sealed partial class MainForm : Form
             _fileListBox.EndUpdate();
         }
 
+        AutoSizeFileList();
         UpdateExportButtons();
+    }
+
+    private void AutoSizeFileList()
+    {
+        var desiredWidth = MinFileListWidth;
+
+        if (_fileListBox.Items.Count > 0)
+        {
+            var maxTextWidth = 0;
+            using (var g = _fileListBox.CreateGraphics())
+            {
+                foreach (var item in _fileListBox.Items)
+                {
+                    var size = TextRenderer.MeasureText(g, item?.ToString() ?? string.Empty, _fileListBox.Font);
+                    if (size.Width > maxTextWidth)
+                        maxTextWidth = size.Width;
+                }
+            }
+
+            var maxAllowedWidth = Math.Max(MinFileListWidth, _splitContainer.ClientSize.Width - MinPreviewWidth);
+            desiredWidth = Math.Clamp(maxTextWidth + FileListWidthPadding, MinFileListWidth, maxAllowedWidth);
+        }
+
+        // Clamp against the SplitContainer's own valid range so this never throws if the
+        // control hasn't finished its initial layout yet (e.g. called during construction).
+        var lowerBound = _splitContainer.Panel1MinSize;
+        var upperBound = _splitContainer.Width - _splitContainer.Panel2MinSize - _splitContainer.SplitterWidth;
+        if (upperBound < lowerBound)
+            return;
+
+        _splitContainer.SplitterDistance = Math.Clamp(desiredWidth, lowerBound, upperBound);
     }
 
     private void RefreshReportFileListPreserveSelection()
