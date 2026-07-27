@@ -60,6 +60,7 @@ partial class MainForm
         _rotateLeftButton = new Button();
         _rotateRightButton = new Button();
         _alignModeCheckBox = new CheckBox();
+        _setOriginCheckBox = new CheckBox();
         _resetButton = new Button();
         _statusStrip = new StatusStrip();
         _statusLabel = new ToolStripStatusLabel();
@@ -299,12 +300,14 @@ partial class MainForm
         _bottomControlsPanel.Controls.Add(_exportButton);
         // Dock.Left controls are laid out with the *last*-added one closest to the true
         // left edge, so this list is in reverse of the intended left-to-right visual
-        // order (Reset, Align, Rotate Left, Rotate Right, Mirror X, Mirror Y, Show Text).
+        // order (Reset, Align, Set Origin, Rotate Left, Rotate Right, Mirror X, Mirror Y,
+        // Show Labels).
         _bottomControlsPanel.Controls.Add(_showTextCheckBox);
         _bottomControlsPanel.Controls.Add(_mirrorYButton);
         _bottomControlsPanel.Controls.Add(_mirrorXButton);
         _bottomControlsPanel.Controls.Add(_rotateRightButton);
         _bottomControlsPanel.Controls.Add(_rotateLeftButton);
+        _bottomControlsPanel.Controls.Add(_setOriginCheckBox);
         _bottomControlsPanel.Controls.Add(_alignModeCheckBox);
         _bottomControlsPanel.Controls.Add(_resetButton);
         _bottomControlsPanel.Dock = DockStyle.Bottom;
@@ -317,20 +320,20 @@ partial class MainForm
         // 
         _exportUsbButton.Dock = DockStyle.Right;
         _exportUsbButton.Enabled = false;
-        _exportUsbButton.Location = new Point(654, 0);
+        _exportUsbButton.Location = new Point(724, 0);
         _exportUsbButton.Name = "_exportUsbButton";
-        _exportUsbButton.Size = new Size(140, 52);
+        _exportUsbButton.Size = new Size(105, 52);
         _exportUsbButton.TabIndex = 0;
         _exportUsbButton.Text = "Write to USB";
         _exportUsbButton.Click += ExportUsbButton_Click;
-        // 
+        //
         // _exportButton
-        // 
+        //
         _exportButton.Dock = DockStyle.Right;
         _exportButton.Enabled = false;
-        _exportButton.Location = new Point(794, 0);
+        _exportButton.Location = new Point(829, 0);
         _exportButton.Name = "_exportButton";
-        _exportButton.Size = new Size(140, 52);
+        _exportButton.Size = new Size(105, 52);
         _exportButton.TabIndex = 1;
         _exportButton.Text = "Export DXF";
         _exportButton.Click += ExportButton_Click;
@@ -341,19 +344,19 @@ partial class MainForm
         _showTextCheckBox.Checked = true;
         _showTextCheckBox.CheckState = CheckState.Checked;
         _showTextCheckBox.Dock = DockStyle.Left;
-        _showTextCheckBox.Location = new Point(540, 0);
+        _showTextCheckBox.Location = new Point(663, 0);
         _showTextCheckBox.Name = "_showTextCheckBox";
         _showTextCheckBox.Size = new Size(110, 52);
         _showTextCheckBox.TabIndex = 2;
-        _showTextCheckBox.Text = "Show Text";
+        _showTextCheckBox.Text = "Show Labels";
         _showTextCheckBox.CheckedChanged += ShowTextCheckBox_CheckedChanged;
         //
         // _mirrorYButton
         //
         _mirrorYButton.Dock = DockStyle.Left;
-        _mirrorYButton.Location = new Point(420, 0);
+        _mirrorYButton.Location = new Point(573, 0);
         _mirrorYButton.Name = "_mirrorYButton";
-        _mirrorYButton.Size = new Size(120, 52);
+        _mirrorYButton.Size = new Size(90, 52);
         _mirrorYButton.TabIndex = 3;
         _mirrorYButton.Text = "Mirror Y";
         _mirrorYButton.Click += MirrorYButton_Click;
@@ -361,9 +364,9 @@ partial class MainForm
         // _mirrorXButton
         //
         _mirrorXButton.Dock = DockStyle.Left;
-        _mirrorXButton.Location = new Point(300, 0);
+        _mirrorXButton.Location = new Point(483, 0);
         _mirrorXButton.Name = "_mirrorXButton";
-        _mirrorXButton.Size = new Size(120, 52);
+        _mirrorXButton.Size = new Size(90, 52);
         _mirrorXButton.TabIndex = 4;
         _mirrorXButton.Text = "Mirror X";
         _mirrorXButton.Click += MirrorXButton_Click;
@@ -371,9 +374,9 @@ partial class MainForm
         // _rotateRightButton
         //
         _rotateRightButton.Dock = DockStyle.Left;
-        _rotateRightButton.Location = new Point(150, 0);
+        _rotateRightButton.Location = new Point(368, 0);
         _rotateRightButton.Name = "_rotateRightButton";
-        _rotateRightButton.Size = new Size(150, 52);
+        _rotateRightButton.Size = new Size(115, 52);
         _rotateRightButton.TabIndex = 5;
         _rotateRightButton.Text = "Rotate Right 90°";
         _rotateRightButton.Click += RotateRightButton_Click;
@@ -381,21 +384,32 @@ partial class MainForm
         // _rotateLeftButton
         //
         _rotateLeftButton.Dock = DockStyle.Left;
-        _rotateLeftButton.Location = new Point(150, 0);
+        _rotateLeftButton.Location = new Point(253, 0);
         _rotateLeftButton.Name = "_rotateLeftButton";
-        _rotateLeftButton.Size = new Size(150, 52);
+        _rotateLeftButton.Size = new Size(115, 52);
         _rotateLeftButton.TabIndex = 6;
         _rotateLeftButton.Text = "Rotate Left 90°";
         _rotateLeftButton.Click += RotateLeftButton_Click;
+        //
+        // _setOriginCheckBox
+        //
+        _setOriginCheckBox.Appearance = Appearance.Button;
+        _setOriginCheckBox.Dock = DockStyle.Left;
+        _setOriginCheckBox.Location = new Point(143, 0);
+        _setOriginCheckBox.Name = "_setOriginCheckBox";
+        _setOriginCheckBox.Size = new Size(110, 52);
+        _setOriginCheckBox.TabIndex = 7;
+        _setOriginCheckBox.Text = "Set Origin";
+        _setOriginCheckBox.CheckedChanged += SetOriginCheckBox_CheckedChanged;
         //
         // _alignModeCheckBox
         //
         _alignModeCheckBox.Appearance = Appearance.Button;
         _alignModeCheckBox.Dock = DockStyle.Left;
-        _alignModeCheckBox.Location = new Point(100, 0);
+        _alignModeCheckBox.Location = new Point(68, 0);
         _alignModeCheckBox.Name = "_alignModeCheckBox";
-        _alignModeCheckBox.Size = new Size(100, 52);
-        _alignModeCheckBox.TabIndex = 7;
+        _alignModeCheckBox.Size = new Size(75, 52);
+        _alignModeCheckBox.TabIndex = 8;
         _alignModeCheckBox.Text = "Align";
         _alignModeCheckBox.CheckedChanged += AlignModeCheckBox_CheckedChanged;
         //
@@ -404,8 +418,8 @@ partial class MainForm
         _resetButton.Dock = DockStyle.Left;
         _resetButton.Location = new Point(0, 0);
         _resetButton.Name = "_resetButton";
-        _resetButton.Size = new Size(90, 52);
-        _resetButton.TabIndex = 8;
+        _resetButton.Size = new Size(68, 52);
+        _resetButton.TabIndex = 9;
         _resetButton.Text = "Reset";
         _resetButton.Click += ResetButton_Click;
         //
@@ -510,6 +524,7 @@ partial class MainForm
     private Button _rotateLeftButton;
     private Button _rotateRightButton;
     private CheckBox _alignModeCheckBox;
+    private CheckBox _setOriginCheckBox;
     private Button _resetButton;
     private CheckBox _showTextCheckBox;
     private Button _exportButton;

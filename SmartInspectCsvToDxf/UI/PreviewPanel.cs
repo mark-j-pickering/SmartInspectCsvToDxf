@@ -24,11 +24,20 @@ public sealed class PreviewPanel : Panel
     // since it already recomputes the camera fit fresh from _features on every repaint.
     private List<Feature> _features = [];
     private object? _featuresSource;
-    private string _orientationDescription = string.Empty;
     private bool _showText = true;
     private DrawingPlane _drawingPlane = DrawingPlane.XY;
     private bool _planeOverridden;
     private bool _alignModeActive;
+    // Which feature (and which of its two points, for a line) the axes are drawn through and
+    // coordinate readouts are measured relative to. Null means the true world origin (0,0).
+    // Deliberately a *reference* rather than a frozen (U,V) snapshot, so that when the picked
+    // feature later moves under a rotate/mirror/align, the origin re-projects from wherever
+    // that feature/point currently is (recomputed fresh every OnPaint via GetOriginUV) instead
+    // of staying pinned to its old position - the axes then visibly follow the same physical
+    // point through an animation, not just jump to it at the end. Never affects the underlying
+    // Feature data drawn/exported - display only.
+    private (int FeatureIndex, bool IsSecondPoint)? _originKeyPoint;
+    private bool _originPickModeActive;
     // Screen-space endpoints of every line feature, cached from the last OnPaint, keyed by
     // index into _features rather than by Feature reference, since MainForm hands in a new
     // list instance on every rotate/mirror/align click and reference equality would never
@@ -42,7 +51,9 @@ public sealed class PreviewPanel : Panel
     // travel. The view's own scale/centre are cached alongside for the same reason: OnPaint
     // recomputes them fresh from the current feature bounds every frame, and mouse-move needs
     // the exact same values to invert a screen point back to world coordinates.
-    private List<(PointF Screen, double U, double V, string Name, int FeatureIndex)> _keyPoints = [];
+    // IsSecondPoint distinguishes a line feature's two key points (X/Y vs X2/Y2) - needed so
+    // Set Origin can remember which end of the line was picked (see _originKeyPoint above).
+    private List<(PointF Screen, double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)> _keyPoints = [];
     // Screen-space bounding box of every drawn feature label, cached from the last OnPaint -
     // lets a feature be snapped/hovered by its name text, not just its geometry, since a
     // label can sit well outside SnapToleranceScreenPixels of its own key point in a crowded
@@ -52,7 +63,7 @@ public sealed class PreviewPanel : Panel
     private double _viewCentreX;
     private double _viewCentreY;
     private (double U, double V)? _mouseWorldPoint;
-    private (double U, double V, string Name, int FeatureIndex)? _snappedPoint;
+    private (double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)? _snappedPoint;
 
     private readonly System.Windows.Forms.Timer _animationTimer;
     private readonly Stopwatch _animationStopwatch = new();
@@ -85,6 +96,23 @@ public sealed class PreviewPanel : Panel
         }
     }
 
+    // MainForm sets this from the Set Origin toggle button. Mutually exclusive with align
+    // mode at the MainForm level (each button unchecks the other), so no interaction between
+    // the two is handled here beyond both being independently cancellable.
+    public bool OriginPickModeActive
+    {
+        get => _originPickModeActive;
+        set
+        {
+            if (_originPickModeActive == value)
+                return;
+
+            _originPickModeActive = value;
+            Cursor = value ? Cursors.Cross : Cursors.Default;
+            Invalidate();
+        }
+    }
+
     // Fired once, on a successful line pick, with the rotation angle/plane needed to level it.
     public event Action<double, DrawingPlane>? LineAligned;
 
@@ -92,6 +120,11 @@ public sealed class PreviewPanel : Panel
     // cancel, or a new report being loaded while align mode was still active - lets
     // MainForm keep its toggle button's Checked state in sync.
     public event Action? AlignModeExited;
+
+    // Fired whenever origin-pick mode ends: a successful pick, an Escape cancel, a new report
+    // loading mid-pick, or a rotate/mirror animation starting - lets MainForm keep its toggle
+    // button's Checked state in sync, mirroring AlignModeExited.
+    public event Action? OriginPickModeExited;
 
     public PreviewPanel()
     {
@@ -132,9 +165,9 @@ public sealed class PreviewPanel : Panel
     // list), but changes when a genuinely different report is loaded. features itself
     // (what's actually drawn) is a *different* list instance on every click, since it's the
     // live, already-transformed result - so it can't be used for this "same file?" check.
-    public void SetFeatures(IEnumerable<Feature> features, object featuresIdentity, bool showText, string orientationDescription = "")
+    public void SetFeatures(IEnumerable<Feature> features, object featuresIdentity, bool showText)
     {
-        // Cancel first: without this, toggling Show Text / Reset / loading a different file
+        // Cancel first: without this, toggling Show Labels / Reset / loading a different file
         // while a rotate/mirror animation is mid-flight would set _features correctly for an
         // instant, then the animation timer's very next tick would overwrite it with a stale
         // interpolated frame before eventually snapping to the *old* animation's target.
@@ -147,6 +180,7 @@ public sealed class PreviewPanel : Panel
             _featuresSource = featuresIdentity;
             _drawingPlane = DrawingPlaneDetector.Detect(_features);
             _planeOverridden = false;
+            _originKeyPoint = null;
 
             if (_alignModeActive)
             {
@@ -154,11 +188,17 @@ public sealed class PreviewPanel : Panel
                 AlignModeExited?.Invoke();
             }
 
+            if (_originPickModeActive)
+            {
+                _originPickModeActive = false;
+                Cursor = Cursors.Default;
+                OriginPickModeExited?.Invoke();
+            }
+
             _hoveredLineIndex = null;
             _snappedPoint = null;
         }
 
-        _orientationDescription = orientationDescription;
         _showText = showText;
         Invalidate();
     }
@@ -171,19 +211,19 @@ public sealed class PreviewPanel : Panel
     // rotate raw X/Y, so animating against any other plane would visibly spin the wrong axis
     // pair for the animation's duration and then pop to the correct final pose. Align passes
     // its own picked plane through instead, since it's already plane-aware.
-    public void AnimateRotation(double angleDegrees, DrawingPlane plane, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription = "")
+    public void AnimateRotation(double angleDegrees, DrawingPlane plane, List<Feature> finalFeatures, object featuresIdentity, bool showText)
     {
         var fromFeatures = _features;
         StartAnimation(
             t => fromFeatures.Select(f => f.WithRotatedInPlane(angleDegrees * t, plane)).ToList(),
-            finalFeatures, featuresIdentity, showText, orientationDescription);
+            finalFeatures, featuresIdentity, showText);
     }
 
     // Animates a mirror as a "card flip": scales the mirrored axis from +1 through 0 to -1.
     // A literal reflection has no continuous in-plane family of matrices to interpolate
     // through (determinant -1 isn't reachable from identity via rotation alone), so this
     // squash-then-unsquash is the standard substitute.
-    public void AnimateMirror(bool mirrorX, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription = "")
+    public void AnimateMirror(bool mirrorX, List<Feature> finalFeatures, object featuresIdentity, bool showText)
     {
         var fromFeatures = _features;
         StartAnimation(
@@ -192,7 +232,7 @@ public sealed class PreviewPanel : Panel
                 var s = 1.0 - 2.0 * t; // Lerp(1, -1, t)
                 return fromFeatures.Select(f => mirrorX ? f.WithScaled(1, s) : f.WithScaled(s, 1)).ToList();
             },
-            finalFeatures, featuresIdentity, showText, orientationDescription);
+            finalFeatures, featuresIdentity, showText);
     }
 
     // Shared by AnimateRotation/AnimateMirror. If an animation is already running, this
@@ -201,7 +241,7 @@ public sealed class PreviewPanel : Panel
     // whatever _features currently displays (even a half-finished frame) as the fresh
     // starting point and restarts the clock toward the new target, rather than queuing or
     // ignoring the click.
-    private void StartAnimation(Func<double, List<Feature>> interpolator, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription)
+    private void StartAnimation(Func<double, List<Feature>> interpolator, List<Feature> finalFeatures, object featuresIdentity, bool showText)
     {
         if (_alignModeActive)
         {
@@ -212,11 +252,17 @@ public sealed class PreviewPanel : Panel
             AlignModeExited?.Invoke();
         }
 
+        if (_originPickModeActive)
+        {
+            _originPickModeActive = false;
+            Cursor = Cursors.Default;
+            OriginPickModeExited?.Invoke();
+        }
+
         _animationInterpolator = interpolator;
         _animationFinalFeatures = finalFeatures.ToList();
         _featuresSource = featuresIdentity;
         _showText = showText;
-        _orientationDescription = orientationDescription;
 
         _animationStopwatch.Restart();
         _animationTimer.Start(); // no-op if already running - this is the retarget path.
@@ -227,6 +273,45 @@ public sealed class PreviewPanel : Panel
         _animationTimer.Stop();
         _animationInterpolator = null;
         _animationFinalFeatures = null;
+    }
+
+    // Clears any picked origin and cancels an in-progress pick, back to the true world origin.
+    // Called by MainForm's Reset button - like the drawing-plane override, this is view state
+    // rather than feature data, but Reset is the one place that means "start this preview
+    // fresh" so it clears it too rather than requiring a separate control.
+    public void ResetOrigin()
+    {
+        var changed = false;
+
+        if (_originPickModeActive)
+        {
+            _originPickModeActive = false;
+            Cursor = Cursors.Default;
+            OriginPickModeExited?.Invoke();
+            changed = true;
+        }
+
+        if (_originKeyPoint is not null)
+        {
+            _originKeyPoint = null;
+            changed = true;
+        }
+
+        if (changed)
+            Invalidate();
+    }
+
+    // Reverts a drawing-plane override (arrow-key cycling, see CyclePlane) back to
+    // auto-detection. Called by MainForm's Reset button alongside ResetOrigin() - same "view
+    // state, not feature data, but Reset still means start this preview fresh" reasoning.
+    public void ResetPlane()
+    {
+        if (!_planeOverridden)
+            return;
+
+        _planeOverridden = false;
+        _drawingPlane = DrawingPlaneDetector.Detect(_features);
+        Invalidate();
     }
 
     private void AnimationTimer_Tick(object? sender, EventArgs e)
@@ -287,6 +372,14 @@ public sealed class PreviewPanel : Panel
                     Invalidate();
                     e.Handled = true;
                 }
+                else if (_originPickModeActive)
+                {
+                    _originPickModeActive = false;
+                    Cursor = Cursors.Default;
+                    OriginPickModeExited?.Invoke();
+                    Invalidate();
+                    e.Handled = true;
+                }
                 break;
         }
     }
@@ -298,6 +391,25 @@ public sealed class PreviewPanel : Panel
 
         if (_alignModeActive && e.Button == MouseButtons.Left && _hoveredLineIndex is int index)
             ConfirmAlign(index);
+        else if (_originPickModeActive && e.Button == MouseButtons.Left && _snappedPoint is { } snapped)
+            ConfirmSetOrigin(snapped);
+    }
+
+    // Picks the origin: a single-shot action just like Mirror/Rotate/Align - this replaces
+    // whatever origin was previously picked (if any) rather than composing with it, and
+    // there's no undo/redo. Unlike those, it's purely a display offset (axes + coordinate
+    // readouts in OnPaint) and never touches Feature data, so MainForm has nothing to track
+    // for it beyond keeping the toggle button's Checked state in sync via OriginPickModeExited.
+    // Stores which feature/point was picked rather than its (U,V) at pick time, so the origin
+    // keeps following that same point through any later rotate/mirror/align (see
+    // _originKeyPoint).
+    private void ConfirmSetOrigin((double U, double V, string Name, int FeatureIndex, bool IsSecondPoint) snapped)
+    {
+        _originKeyPoint = (snapped.FeatureIndex, snapped.IsSecondPoint);
+        _originPickModeActive = false;
+        Cursor = Cursors.Default;
+        OriginPickModeExited?.Invoke();
+        Invalidate();
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -391,7 +503,7 @@ public sealed class PreviewPanel : Panel
     // SnapToleranceScreenPixels of any key point directly - lets a feature be snapped/selected
     // via its name text, not just its geometry, since a label can sit well clear of its own
     // key point once a drawing gets crowded.
-    private (double U, double V, string Name, int FeatureIndex)? FindSnapPointFromLabel(Point location)
+    private (double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)? FindSnapPointFromLabel(Point location)
     {
         foreach (var label in _labelRects)
         {
@@ -417,10 +529,10 @@ public sealed class PreviewPanel : Panel
 
     // Nearest key point across every feature, gated by SnapToleranceScreenPixels so the mouse
     // has to actually be close to something to snap.
-    private static (double U, double V, string Name, int FeatureIndex)? FindNearestKeyPoint(
-        Point location, List<(PointF Screen, double U, double V, string Name, int FeatureIndex)> keyPoints, float tolerance)
+    private static (double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)? FindNearestKeyPoint(
+        Point location, List<(PointF Screen, double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)> keyPoints, float tolerance)
     {
-        (double U, double V, string Name, int FeatureIndex)? nearest = null;
+        (double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)? nearest = null;
         var bestDistance = float.MaxValue;
         foreach (var keyPoint in keyPoints)
         {
@@ -428,7 +540,7 @@ public sealed class PreviewPanel : Panel
             if (distance < bestDistance)
             {
                 bestDistance = distance;
-                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name, keyPoint.FeatureIndex);
+                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name, keyPoint.FeatureIndex, keyPoint.IsSecondPoint);
             }
         }
 
@@ -438,9 +550,9 @@ public sealed class PreviewPanel : Panel
     // Nearest key point belonging to one specific feature, with no distance cutoff - used for
     // the align-hovered line, which is already known (via FindNearestLineIndex's own, looser
     // tolerance) to be the one the mouse is over.
-    private (double U, double V, string Name, int FeatureIndex)? NearestKeyPointOnFeature(Point location, int featureIndex)
+    private (double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)? NearestKeyPointOnFeature(Point location, int featureIndex)
     {
-        (double U, double V, string Name, int FeatureIndex)? nearest = null;
+        (double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)? nearest = null;
         var bestDistance = float.MaxValue;
         foreach (var keyPoint in _keyPoints)
         {
@@ -451,7 +563,7 @@ public sealed class PreviewPanel : Panel
             if (distance < bestDistance)
             {
                 bestDistance = distance;
-                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name, keyPoint.FeatureIndex);
+                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name, keyPoint.FeatureIndex, keyPoint.IsSecondPoint);
             }
         }
 
@@ -500,7 +612,9 @@ public sealed class PreviewPanel : Panel
     }
 
     // Implements the align pick: rotates the whole feature set so that the picked line
-    // becomes exactly horizontal in the current drawing plane.
+    // becomes exactly horizontal *or* vertical in the current drawing plane, whichever is
+    // the nearer orthogonal direction - not always horizontal regardless of how close the
+    // line already is to vertical.
     private void ConfirmAlign(int index)
     {
         // _features already holds the current, live-transformed state (MainForm mutates
@@ -514,19 +628,23 @@ public sealed class PreviewPanel : Panel
 
         var angleDeg = Math.Atan2(v2 - v1, u2 - u1) * 180.0 / Math.PI;
 
-        // Reduce mod 180 into (-90, 90] - a line has no inherent direction, so a segment
-        // pointing "backwards" should still be treated as already-horizontal, not needing a
-        // near-180-degree spin.
-        var normalized = angleDeg % 180.0;
-        if (normalized <= -90.0)
-            normalized += 180.0;
-        else if (normalized > 90.0)
-            normalized -= 180.0;
+        // Reduce mod 90 into (-45, 45] - a line has no inherent direction (so a segment
+        // pointing "backwards" is still just as horizontal/vertical), and unlike a mod-180
+        // reduction (which always targets horizontal, up to a near-90-degree spin for a
+        // near-vertical line), this picks whichever of horizontal or vertical is actually
+        // closer, capping the rotation at 45 degrees.
+        var normalized = angleDeg % 90.0;
+        if (normalized <= -45.0)
+            normalized += 90.0;
+        else if (normalized > 45.0)
+            normalized -= 90.0;
 
-        // Feature.WithRotatedInPlane's rotation formula solves to v' = 0 exactly when
-        // theta = atan2(v, u) - i.e. the required align angle is this normalized angle
-        // itself, not its negation (verified numerically: a 45-degree segment needs +45 fed
-        // into WithRotatedInPlane to land horizontal, not -45).
+        // Feature.WithRotatedInPlane's rotation formula solves to v' = 0 (horizontal) when
+        // theta = atan2(v, u), not its negation (verified numerically: a 45-degree segment
+        // needs +45 fed into WithRotatedInPlane to land horizontal, not -45); since a target
+        // 90 degrees away from that also satisfies u' = 0 (vertical) using the very same
+        // formula, feeding it this mod-90-reduced angle correctly lands on whichever of the
+        // two orthogonal directions is nearer.
         var requiredAlignAngle = normalized;
         var plane = _drawingPlane;
 
@@ -554,6 +672,9 @@ public sealed class PreviewPanel : Panel
         var nextIndex = ((currentIndex + direction) % Planes.Length + Planes.Length) % Planes.Length;
         _drawingPlane = Planes[nextIndex];
         _planeOverridden = true;
+        // No need to clear a picked origin here - GetOriginUV() re-projects the tracked
+        // feature/point fresh under whichever plane is active, so it stays meaningful (just
+        // reported in different axes) rather than needing to be re-picked after cycling.
         Invalidate();
     }
 
@@ -632,14 +753,15 @@ public sealed class PreviewPanel : Panel
         using var textBrush = new SolidBrush(Color.FromArgb(40, 40, 40));
 
         var (uLabel, vLabel) = DrawingPlaneMapper.AxisLabels(_drawingPlane);
-        DrawAxes(g, ToScreen, axisPen, uLabel, vLabel);
+        var (originU, originV) = GetOriginUV();
+        DrawAxes(g, ToScreen, axisPen, uLabel, vLabel, originU, originV);
 
         using var highlightPen = new Pen(Color.FromArgb(255, 140, 0), 3.2f);
         using var boldLabelFont = new Font(Font, FontStyle.Bold);
         using var dimmedTextBrush = new SolidBrush(Color.FromArgb(190, 190, 190));
         using var snappedTextBrush = new SolidBrush(Color.FromArgb(0, 120, 0));
         var newScreenLines = new List<(int Index, PointF Start, PointF End)>();
-        var newKeyPoints = new List<(PointF Screen, double U, double V, string Name, int FeatureIndex)>();
+        var newKeyPoints = new List<(PointF Screen, double U, double V, string Name, int FeatureIndex, bool IsSecondPoint)>();
         var newLabelRects = new List<(RectangleF Bounds, int FeatureIndex)>();
 
         // When something is snapped, its label is bolded/coloured to stand out and every
@@ -660,8 +782,8 @@ public sealed class PreviewPanel : Panel
             {
                 var end = ToScreen(p.U2!.Value, p.V2!.Value);
                 newScreenLines.Add((index, centre, end));
-                newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name, index));
-                newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name, index));
+                newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name, index, false));
+                newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name, index, true));
 
                 g.DrawLine(linePen, centre, end);
                 // _snappedPoint already tracks the align-hovered line (see
@@ -686,7 +808,7 @@ public sealed class PreviewPanel : Panel
                 continue;
             }
 
-            newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name, index));
+            newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name, index, false));
 
             var r = ToScreenLength(p.Feature.Radius);
             g.DrawEllipse(circlePen, centre.X - r, centre.Y - r, r * 2, r * 2);
@@ -716,20 +838,57 @@ public sealed class PreviewPanel : Panel
             using var snapPen = new Pen(Color.FromArgb(0, 130, 0), 1.5f);
             g.FillEllipse(snapBrush, snapScreen.X - snapRadius, snapScreen.Y - snapRadius, snapRadius * 2, snapRadius * 2);
             g.DrawEllipse(snapPen, snapScreen.X - snapRadius, snapScreen.Y - snapRadius, snapRadius * 2, snapRadius * 2);
+
+            // For a line feature, also mark its other endpoint - smaller than the primary
+            // dot above - so both ends of the highlighted line read as picked, not just the
+            // one nearer the cursor that _snappedPoint itself tracks.
+            if (_features[snapped.FeatureIndex].IsLine)
+            {
+                foreach (var keyPoint in _keyPoints)
+                {
+                    if (keyPoint.FeatureIndex != snapped.FeatureIndex || (keyPoint.U == snapped.U && keyPoint.V == snapped.V))
+                        continue;
+
+                    const float farRadius = 3f;
+                    g.FillEllipse(snapBrush, keyPoint.Screen.X - farRadius, keyPoint.Screen.Y - farRadius, farRadius * 2, farRadius * 2);
+                    g.DrawEllipse(snapPen, keyPoint.Screen.X - farRadius, keyPoint.Screen.Y - farRadius, farRadius * 2, farRadius * 2);
+                    break;
+                }
+            }
         }
 
         using var footerBrush = new SolidBrush(Color.DimGray);
         var planeSource = _planeOverridden ? "manual" : "auto";
-        var footer = $"{_features.Count} features | Plane {_drawingPlane} ({planeSource}, ↑↓←→ to change) | {uLabel} {minX:0.###} to {maxX:0.###} | {vLabel} {minY:0.###} to {maxY:0.###}";
-        if (_orientationDescription.Length > 0)
-            footer += $" | {_orientationDescription}";
+        var footer = $"{_features.Count} features | Plane {_drawingPlane} ({planeSource}, ↑↓←→ to change) | {uLabel} {minX - originU:0.###} to {maxX - originU:0.###} | {vLabel} {minY - originV:0.###} to {maxY - originV:0.###}";
         if (_alignModeActive)
             footer += " | Align mode: click a line to level it (Esc to cancel)";
+        if (_originPickModeActive)
+            footer += " | Set origin: click a key point (Esc to cancel)";
 
         if (_snappedPoint is { } snap)
-            footer += $" | Snapped to {snap.Name}: {uLabel}={snap.U:0.###} {vLabel}={snap.V:0.###}";
+        {
+            footer += $" | Snapped to {snap.Name}: {uLabel}={snap.U - originU:0.###} {vLabel}={snap.V - originV:0.###}";
+
+            // Length/angle (for a line) or diameter (for a circle) of whichever feature is
+            // currently snapped - measured from the same projected U/V the preview actually
+            // draws, so it matches what's on screen rather than the feature's raw 3D data.
+            var snappedFeature = _features[snap.FeatureIndex];
+            if (snappedFeature.IsLine)
+            {
+                var line = projected[snap.FeatureIndex];
+                var du = line.U2!.Value - line.U;
+                var dv = line.V2!.Value - line.V;
+                var length = Math.Sqrt(du * du + dv * dv);
+                var angle = Math.Atan2(dv, du) * 180.0 / Math.PI;
+                footer += $" | Length={length:0.###} Angle={angle:0.##}°";
+            }
+            else
+            {
+                footer += $" | Diameter={snappedFeature.Diameter:0.###}";
+            }
+        }
         else if (_mouseWorldPoint is { } mouse)
-            footer += $" | {uLabel}={mouse.U:0.###} {vLabel}={mouse.V:0.###}";
+            footer += $" | {uLabel}={mouse.U - originU:0.###} {vLabel}={mouse.V - originV:0.###}";
 
         g.DrawString(footer, Font, footerBrush, new PointF(8, Height - Font.Height - 8));
     }
@@ -746,12 +905,32 @@ public sealed class PreviewPanel : Panel
         g.DrawImage(EmbeddedBackgroundImage, x, y, drawWidth, drawHeight);
     }
 
-    private void DrawAxes(Graphics g, Func<double, double, PointF> toScreen, Pen axisPen, string uLabel, string vLabel)
+    // Re-projects the tracked origin feature/point (if any) under the current _drawingPlane
+    // and current _features state - called fresh every OnPaint, including every animation
+    // tick, so the axes visibly follow that point through a rotate/mirror/align instead of
+    // staying pinned to wherever it was when picked.
+    private (double U, double V) GetOriginUV()
     {
-        var x0a = toScreen(-1_000_000, 0);
-        var x0b = toScreen(1_000_000, 0);
-        var y0a = toScreen(0, -1_000_000);
-        var y0b = toScreen(0, 1_000_000);
+        if (_originKeyPoint is not { } key || key.FeatureIndex >= _features.Count)
+            return (0.0, 0.0);
+
+        var feature = _features[key.FeatureIndex];
+        if (key.IsSecondPoint && feature.IsLine)
+        {
+            var (u, v, _) = DrawingPlaneMapper.Project(feature.X2!.Value, feature.Y2!.Value, feature.Z2 ?? 0.0, _drawingPlane);
+            return (u, v);
+        }
+
+        var (u2, v2, _) = DrawingPlaneMapper.Project(feature, _drawingPlane);
+        return (u2, v2);
+    }
+
+    private void DrawAxes(Graphics g, Func<double, double, PointF> toScreen, Pen axisPen, string uLabel, string vLabel, double originU, double originV)
+    {
+        var x0a = toScreen(originU - 1_000_000, originV);
+        var x0b = toScreen(originU + 1_000_000, originV);
+        var y0a = toScreen(originU, originV - 1_000_000);
+        var y0b = toScreen(originU, originV + 1_000_000);
 
         g.DrawLine(axisPen, x0a, x0b);
         g.DrawLine(axisPen, y0a, y0b);
