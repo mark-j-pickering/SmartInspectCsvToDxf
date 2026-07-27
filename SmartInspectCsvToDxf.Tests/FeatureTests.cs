@@ -155,4 +155,75 @@ public sealed class FeatureTests
         Assert.Equal(10 * Math.Cos(Math.PI / 6), result.X, precision: 10);
         Assert.Equal(-10 * Math.Sin(Math.PI / 6), result.Y, precision: 10);
     }
+
+    [Fact]
+    public void WithScaled_OneNegativeOne_MatchesWithMirrorX()
+    {
+        var feature = new Feature { Name = "hole1", X = 10, Y = 20, Z = 5 };
+
+        var scaled = feature.WithScaled(1, -1);
+        var mirrored = feature.WithMirrorX();
+
+        Assert.Equal(mirrored.X, scaled.X);
+        Assert.Equal(mirrored.Y, scaled.Y);
+        Assert.Equal(mirrored.Z, scaled.Z);
+    }
+
+    [Fact]
+    public void WithScaled_NegativeOneOne_MatchesWithMirrorY()
+    {
+        var feature = new Feature { Name = "hole1", X = 10, Y = 20, Z = 5 };
+
+        var scaled = feature.WithScaled(-1, 1);
+        var mirrored = feature.WithMirrorY();
+
+        Assert.Equal(mirrored.X, scaled.X);
+        Assert.Equal(mirrored.Y, scaled.Y);
+        Assert.Equal(mirrored.Z, scaled.Z);
+    }
+
+    [Fact]
+    public void WithScaled_ScalesSecondPoint_ForLineFeatures()
+    {
+        var feature = new Feature { Name = "line1", X = 1, Y = 2, X2 = 3, Y2 = 4, Z2 = 0 };
+
+        var scaled = feature.WithScaled(1, -1);
+
+        Assert.Equal(3, scaled.X2);
+        Assert.Equal(-4, scaled.Y2);
+    }
+
+    [Fact]
+    public void WithScaled_LeavesZAndZ2Unchanged()
+    {
+        var feature = new Feature { Name = "hole1", X = 10, Y = 20, Z = 5, X2 = 1, Y2 = 1, Z2 = 9 };
+
+        var scaled = feature.WithScaled(-1, -1);
+
+        Assert.Equal(5, scaled.Z);
+        Assert.Equal(9, scaled.Z2);
+    }
+
+    [Fact]
+    public void WithScaled_IdentityScale_IsNoOp()
+    {
+        var feature = new Feature { Name = "hole1", X = 10, Y = 20, Z = 5 };
+
+        var scaled = feature.WithScaled(1, 1);
+
+        Assert.Equal(10, scaled.X);
+        Assert.Equal(20, scaled.Y);
+    }
+
+    [Fact]
+    public void WithScaled_NonLineFeature_LeavesSecondPointNull()
+    {
+        var feature = new Feature { Name = "hole1", X = 10, Y = 20 };
+
+        var scaled = feature.WithScaled(-1, 1);
+
+        Assert.Null(scaled.X2);
+        Assert.Null(scaled.Y2);
+        Assert.Null(scaled.Z2);
+    }
 }

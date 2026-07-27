@@ -320,28 +320,32 @@ public sealed partial class MainForm : Form
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithMirrorX()).ToList();
         _mirrorXCount++;
-        RefreshPreview();
+        _previewPanel.AnimateMirror(mirrorX: true, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
     }
 
     private void MirrorYButton_Click(object? sender, EventArgs e)
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithMirrorY()).ToList();
         _mirrorYCount++;
-        RefreshPreview();
+        _previewPanel.AnimateMirror(mirrorX: false, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
     }
 
     private void RotateLeftButton_Click(object? sender, EventArgs e)
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithRotatedLeft90()).ToList();
         _rotateLeftCount++;
-        RefreshPreview();
+        // Hardcoded to XY, not the panel's currently-viewed plane: WithRotatedLeft90 always
+        // rotates raw X/Y, so the animation must match that regardless of which plane is
+        // being viewed, or it'd visibly spin the wrong axis pair and then pop to the correct
+        // final pose (Align below is different - it's already plane-aware).
+        _previewPanel.AnimateRotation(-90, DrawingPlane.XY, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
     }
 
     private void RotateRightButton_Click(object? sender, EventArgs e)
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithRotatedRight90()).ToList();
         _rotateRightCount++;
-        RefreshPreview();
+        _previewPanel.AnimateRotation(90, DrawingPlane.XY, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
     }
 
     private void ShowTextCheckBox_CheckedChanged(object? sender, EventArgs e) => RefreshPreview();
@@ -355,7 +359,7 @@ public sealed partial class MainForm : Form
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithRotatedInPlane(angleDegrees, plane)).ToList();
         _lastAlign = (angleDegrees, plane);
-        RefreshPreview();
+        _previewPanel.AnimateRotation(angleDegrees, plane, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
     }
 
     private void PreviewPanel_AlignModeExited()

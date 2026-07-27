@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using SmartInspectCsvToDxf.Models;
 using SmartInspectCsvToDxf.Services;
 
@@ -10,11 +11,16 @@ public sealed class PreviewPanel : Panel
     private static readonly DrawingPlane[] Planes = Enum.GetValues<DrawingPlane>();
 
     private const float HitToleranceScreenPixels = 6f;
+    private const int AnimationDurationMs = 1000;
+    private const int AnimationIntervalMs = 10;
 
     // The features drawn/hit-tested here are always already in their final, current state -
     // MainForm mutates its own live feature list directly on every rotate/mirror/align click
     // and hands the result straight through; this panel has no notion of "orientation" to
-    // apply, it just draws whatever it's given.
+    // apply, it just draws whatever it's given. During an animated transition (see
+    // AnimateRotation/AnimateMirror), _features instead holds a continuously-interpolated
+    // in-between state, updated on a timer - OnPaint itself needs no special-casing for this,
+    // since it already recomputes the camera fit fresh from _features on every repaint.
     private List<Feature> _features = [];
     private object? _featuresSource;
     private string _orientationDescription = string.Empty;
@@ -28,6 +34,13 @@ public sealed class PreviewPanel : Panel
     // match hover state across frames.
     private List<(int Index, PointF Start, PointF End)> _screenLines = [];
     private int? _hoveredLineIndex;
+
+    private readonly System.Windows.Forms.Timer _animationTimer;
+    private readonly Stopwatch _animationStopwatch = new();
+    private Func<double, List<Feature>>? _animationInterpolator;
+    private List<Feature>? _animationFinalFeatures;
+
+    public bool IsAnimating => _animationTimer.Enabled;
 
     public DrawingPlane DrawingPlane => _drawingPlane;
     public bool IsPlaneOverridden => _planeOverridden;
@@ -67,6 +80,23 @@ public sealed class PreviewPanel : Panel
         ResizeRedraw = true;
         SetStyle(ControlStyles.Selectable, true);
         TabStop = true;
+
+        _animationTimer = new System.Windows.Forms.Timer { Interval = AnimationIntervalMs };
+        _animationTimer.Tick += AnimationTimer_Tick;
+    }
+
+    // PreviewPanel is hand-written (no Designer partial/components container to dispose the
+    // animation timer for free the way MainForm's _refreshTimer gets), so this needs its own
+    // explicit lifecycle.
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _animationTimer.Stop();
+            _animationTimer.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     private static Image LoadEmbeddedBackgroundImage()
@@ -84,6 +114,12 @@ public sealed class PreviewPanel : Panel
     // live, already-transformed result - so it can't be used for this "same file?" check.
     public void SetFeatures(IEnumerable<Feature> features, object featuresIdentity, bool showText, string orientationDescription = "")
     {
+        // Cancel first: without this, toggling Show Text / Reset / loading a different file
+        // while a rotate/mirror animation is mid-flight would set _features correctly for an
+        // instant, then the animation timer's very next tick would overwrite it with a stale
+        // interpolated frame before eventually snapping to the *old* animation's target.
+        CancelAnimation();
+
         _features = features.ToList();
 
         if (!ReferenceEquals(featuresIdentity, _featuresSource))
@@ -103,6 +139,93 @@ public sealed class PreviewPanel : Panel
 
         _orientationDescription = orientationDescription;
         _showText = showText;
+        Invalidate();
+    }
+
+    // Animates the whole feature set rotating through angleDegrees about world (0,0) in the
+    // given plane, then snaps to finalFeatures exactly (rather than trusting the last
+    // interpolated frame, which could drift from MainForm's authoritative state by floating-
+    // point rounding). Rotate Left/Right must pass DrawingPlane.XY here regardless of the
+    // panel's *currently viewed* _drawingPlane - WithRotatedRight90/WithRotatedLeft90 always
+    // rotate raw X/Y, so animating against any other plane would visibly spin the wrong axis
+    // pair for the animation's duration and then pop to the correct final pose. Align passes
+    // its own picked plane through instead, since it's already plane-aware.
+    public void AnimateRotation(double angleDegrees, DrawingPlane plane, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription = "")
+    {
+        var fromFeatures = _features;
+        StartAnimation(
+            t => fromFeatures.Select(f => f.WithRotatedInPlane(angleDegrees * t, plane)).ToList(),
+            finalFeatures, featuresIdentity, showText, orientationDescription);
+    }
+
+    // Animates a mirror as a "card flip": scales the mirrored axis from +1 through 0 to -1.
+    // A literal reflection has no continuous in-plane family of matrices to interpolate
+    // through (determinant -1 isn't reachable from identity via rotation alone), so this
+    // squash-then-unsquash is the standard substitute.
+    public void AnimateMirror(bool mirrorX, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription = "")
+    {
+        var fromFeatures = _features;
+        StartAnimation(
+            t =>
+            {
+                var s = 1.0 - 2.0 * t; // Lerp(1, -1, t)
+                return fromFeatures.Select(f => mirrorX ? f.WithScaled(1, s) : f.WithScaled(s, 1)).ToList();
+            },
+            finalFeatures, featuresIdentity, showText, orientationDescription);
+    }
+
+    // Shared by AnimateRotation/AnimateMirror. If an animation is already running, this
+    // retargets it: MainForm's own feature list is always mutated instantly/authoritatively
+    // regardless of what the panel is mid-way through showing, so a new click just captures
+    // whatever _features currently displays (even a half-finished frame) as the fresh
+    // starting point and restarts the clock toward the new target, rather than queuing or
+    // ignoring the click.
+    private void StartAnimation(Func<double, List<Feature>> interpolator, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription)
+    {
+        if (_alignModeActive)
+        {
+            _alignModeActive = false;
+            _hoveredLineIndex = null;
+            Cursor = Cursors.Default;
+            AlignModeExited?.Invoke();
+        }
+
+        _animationInterpolator = interpolator;
+        _animationFinalFeatures = finalFeatures.ToList();
+        _featuresSource = featuresIdentity;
+        _showText = showText;
+        _orientationDescription = orientationDescription;
+
+        _animationStopwatch.Restart();
+        _animationTimer.Start(); // no-op if already running - this is the retarget path.
+    }
+
+    private void CancelAnimation()
+    {
+        _animationTimer.Stop();
+        _animationInterpolator = null;
+        _animationFinalFeatures = null;
+    }
+
+    private void AnimationTimer_Tick(object? sender, EventArgs e)
+    {
+        // Elapsed real time, not a tick count * interval - Timer ticks aren't guaranteed to
+        // land exactly on schedule under UI-thread load, so this self-corrects instead of
+        // running slow when the message loop is busy.
+        var t = Math.Clamp(_animationStopwatch.Elapsed.TotalMilliseconds / AnimationDurationMs, 0.0, 1.0);
+
+        if (t >= 1.0)
+        {
+            _animationTimer.Stop();
+            _features = _animationFinalFeatures!;
+            _animationInterpolator = null;
+            _animationFinalFeatures = null;
+            Invalidate();
+            return;
+        }
+
+        var eased = 1.0 - Math.Pow(1.0 - t, 3); // ease-out-cubic
+        _features = _animationInterpolator!(eased);
         Invalidate();
     }
 
@@ -158,7 +281,7 @@ public sealed class PreviewPanel : Panel
     {
         base.OnMouseMove(e);
 
-        if (!_alignModeActive || _screenLines.Count == 0)
+        if (!_alignModeActive || IsAnimating || _screenLines.Count == 0)
         {
             if (_hoveredLineIndex is not null)
             {
@@ -261,14 +384,20 @@ public sealed class PreviewPanel : Panel
         // itself, not its negation (verified numerically: a 45-degree segment needs +45 fed
         // into WithRotatedInPlane to land horizontal, not -45).
         var requiredAlignAngle = normalized;
+        var plane = _drawingPlane;
 
-        LineAligned?.Invoke(requiredAlignAngle, _drawingPlane);
-
+        // Exit align mode before invoking LineAligned, not after: MainForm's handler calls
+        // back into AnimateRotation, whose StartAnimation would otherwise find align mode
+        // still flagged active and perform this same cleanup itself, then this method would
+        // redundantly repeat it (harmless - AlignModeExited firing twice just no-ops an
+        // already-unchecked checkbox - but doing it in this order avoids it cleanly).
         _alignModeActive = false;
         _hoveredLineIndex = null;
         Cursor = Cursors.Default;
         AlignModeExited?.Invoke();
         Invalidate();
+
+        LineAligned?.Invoke(requiredAlignAngle, plane);
     }
 
     private void CyclePlane(int direction)
@@ -427,8 +556,12 @@ public sealed class PreviewPanel : Panel
         g.DrawLine(axisPen, x0a, x0b);
         g.DrawLine(axisPen, y0a, y0b);
 
+        // Labelled where each axis line actually meets the panel edge it runs alongside -
+        // the horizontal (U) line meets the right edge, the vertical (V) line meets the top
+        // - offset a few pixels so the text sits just clear of the line rather than on it.
         using var brush = new SolidBrush(Color.Gray);
-        g.DrawString(uLabel, Font, brush, Width - 24, y0a.Y + 4);
-        g.DrawString(vLabel, Font, brush, y0a.X + 4, 8);
+        var uLabelSize = g.MeasureString(uLabel, Font);
+        g.DrawString(uLabel, Font, brush, Width - uLabelSize.Width - 6, x0b.Y - uLabelSize.Height - 4);
+        g.DrawString(vLabel, Font, brush, y0b.X + 6, 4);
     }
 }

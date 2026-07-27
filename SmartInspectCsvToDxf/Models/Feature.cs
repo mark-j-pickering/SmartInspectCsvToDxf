@@ -137,4 +137,23 @@ public sealed class Feature
             Z2 = z2
         };
     }
+
+    // Scales raw X/Y (and X2/Y2 for line features) independently; Z/Z2 untouched, matching
+    // WithMirrorX/WithMirrorY's existing not-plane-aware convention. WithScaled(1, -1) is
+    // bit-identical to WithMirrorX(); WithScaled(-1, 1) is bit-identical to WithMirrorY().
+    // Exists so the preview's mirror animation can interpolate a continuous "card flip"
+    // (scaleY or scaleX sweeping 1 -> 0 -> -1) - a literal reflection has no continuous
+    // in-between family of matrices, but a shrinking/growing scale does.
+    public Feature WithScaled(double scaleX, double scaleY) => new()
+    {
+        Name = Name,
+        X = X * scaleX,
+        Y = Y * scaleY,
+        Z = Z,
+        Diameter = Diameter,
+        Radius = Radius,
+        X2 = X2.HasValue ? X2.Value * scaleX : null,
+        Y2 = Y2.HasValue ? Y2.Value * scaleY : null,
+        Z2 = Z2
+    };
 }
