@@ -43,6 +43,11 @@ public sealed class PreviewPanel : Panel
     // recomputes them fresh from the current feature bounds every frame, and mouse-move needs
     // the exact same values to invert a screen point back to world coordinates.
     private List<(PointF Screen, double U, double V, string Name, int FeatureIndex)> _keyPoints = [];
+    // Screen-space bounding box of every drawn feature label, cached from the last OnPaint -
+    // lets a feature be snapped/hovered by its name text, not just its geometry, since a
+    // label can sit well outside SnapToleranceScreenPixels of its own key point in a crowded
+    // drawing. Empty whenever _showText is off, since nothing is drawn to hit-test.
+    private List<(RectangleF Bounds, int FeatureIndex)> _labelRects = [];
     private double _viewScale = 1.0;
     private double _viewCentreX;
     private double _viewCentreY;
@@ -72,6 +77,7 @@ public sealed class PreviewPanel : Panel
             if (!value)
             {
                 _hoveredLineIndex = null;
+                _snappedPoint = null;
                 Cursor = Cursors.Default;
             }
 
@@ -149,6 +155,7 @@ public sealed class PreviewPanel : Panel
             }
 
             _hoveredLineIndex = null;
+            _snappedPoint = null;
         }
 
         _orientationDescription = orientationDescription;
@@ -200,6 +207,7 @@ public sealed class PreviewPanel : Panel
         {
             _alignModeActive = false;
             _hoveredLineIndex = null;
+            _snappedPoint = null;
             Cursor = Cursors.Default;
             AlignModeExited?.Invoke();
         }
@@ -273,6 +281,7 @@ public sealed class PreviewPanel : Panel
                 {
                     _alignModeActive = false;
                     _hoveredLineIndex = null;
+                    _snappedPoint = null;
                     Cursor = Cursors.Default;
                     AlignModeExited?.Invoke();
                     Invalidate();
@@ -295,8 +304,9 @@ public sealed class PreviewPanel : Panel
     {
         base.OnMouseMove(e);
 
-        UpdateMouseTracking(e.Location);
-
+        // Align-mode line hover is resolved first so UpdateMouseTracking (below) can key its
+        // snap/highlight display off this move's _hoveredLineIndex rather than the previous
+        // move's.
         if (!_alignModeActive || IsAnimating || _screenLines.Count == 0)
         {
             if (_hoveredLineIndex is not null)
@@ -307,13 +317,17 @@ public sealed class PreviewPanel : Panel
         }
         else
         {
-            var nearest = FindNearestLineIndex(e.Location);
+            // Falling back to a label hit lets a line be picked for align by its name text
+            // too, not just by hovering the segment itself.
+            var nearest = FindNearestLineIndex(e.Location) ?? FindLineIndexFromLabel(e.Location);
             if (nearest != _hoveredLineIndex)
             {
                 _hoveredLineIndex = nearest;
                 Cursor = nearest.HasValue ? Cursors.Hand : Cursors.Default;
             }
         }
+
+        UpdateMouseTracking(e.Location);
 
         // Unlike the hover-only paths above, the coordinate readout changes on every pixel of
         // mouse travel, so this always repaints rather than only when something discrete
@@ -355,21 +369,62 @@ public sealed class PreviewPanel : Panel
         var v = _viewCentreY - (location.Y - Height / 2.0) / _viewScale;
         _mouseWorldPoint = (u, v);
 
-        // Align mode has its own line-hover/highlight interaction (see OnMouseMove) - key-
-        // point snapping and its label/geometry highlight would just visually compete with it.
+        // Align mode has its own line hit-test (FindNearestLineIndex, a looser point-to-
+        // segment distance rather than nearest-key-point) - reuse whatever it just found
+        // instead of running an independent nearest-key-point search, so the green dot/label
+        // highlight always tracks the same line align mode would act on if clicked. This also
+        // keeps circles from ever snapping/highlighting during align mode "for free", since
+        // _hoveredLineIndex only ever refers to a line feature.
         if (_alignModeActive)
         {
-            _snappedPoint = null;
+            _snappedPoint = _hoveredLineIndex is int hoveredIndex
+                ? NearestKeyPointOnFeature(location, hoveredIndex)
+                : null;
             return;
         }
 
+        _snappedPoint = FindNearestKeyPoint(location, _keyPoints, SnapToleranceScreenPixels)
+            ?? FindSnapPointFromLabel(location);
+    }
+
+    // Falls back to hit-testing feature labels when the cursor isn't within
+    // SnapToleranceScreenPixels of any key point directly - lets a feature be snapped/selected
+    // via its name text, not just its geometry, since a label can sit well clear of its own
+    // key point once a drawing gets crowded.
+    private (double U, double V, string Name, int FeatureIndex)? FindSnapPointFromLabel(Point location)
+    {
+        foreach (var label in _labelRects)
+        {
+            if (label.Bounds.Contains(location))
+                return NearestKeyPointOnFeature(location, label.FeatureIndex);
+        }
+
+        return null;
+    }
+
+    // Line-only counterpart used by align mode's own hover, so a line can also be picked by
+    // its label rather than only by hovering the segment itself.
+    private int? FindLineIndexFromLabel(Point location)
+    {
+        foreach (var label in _labelRects)
+        {
+            if (label.Bounds.Contains(location) && _features[label.FeatureIndex].IsLine)
+                return label.FeatureIndex;
+        }
+
+        return null;
+    }
+
+    // Nearest key point across every feature, gated by SnapToleranceScreenPixels so the mouse
+    // has to actually be close to something to snap.
+    private static (double U, double V, string Name, int FeatureIndex)? FindNearestKeyPoint(
+        Point location, List<(PointF Screen, double U, double V, string Name, int FeatureIndex)> keyPoints, float tolerance)
+    {
         (double U, double V, string Name, int FeatureIndex)? nearest = null;
         var bestDistance = float.MaxValue;
-        foreach (var keyPoint in _keyPoints)
+        foreach (var keyPoint in keyPoints)
         {
-            var dx = location.X - keyPoint.Screen.X;
-            var dy = location.Y - keyPoint.Screen.Y;
-            var distance = MathF.Sqrt(dx * dx + dy * dy);
+            var distance = Distance(location, keyPoint.Screen);
             if (distance < bestDistance)
             {
                 bestDistance = distance;
@@ -377,7 +432,30 @@ public sealed class PreviewPanel : Panel
             }
         }
 
-        _snappedPoint = bestDistance <= SnapToleranceScreenPixels ? nearest : null;
+        return bestDistance <= tolerance ? nearest : null;
+    }
+
+    // Nearest key point belonging to one specific feature, with no distance cutoff - used for
+    // the align-hovered line, which is already known (via FindNearestLineIndex's own, looser
+    // tolerance) to be the one the mouse is over.
+    private (double U, double V, string Name, int FeatureIndex)? NearestKeyPointOnFeature(Point location, int featureIndex)
+    {
+        (double U, double V, string Name, int FeatureIndex)? nearest = null;
+        var bestDistance = float.MaxValue;
+        foreach (var keyPoint in _keyPoints)
+        {
+            if (keyPoint.FeatureIndex != featureIndex)
+                continue;
+
+            var distance = Distance(location, keyPoint.Screen);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name, keyPoint.FeatureIndex);
+            }
+        }
+
+        return nearest;
     }
 
     private int? FindNearestLineIndex(Point location)
@@ -459,6 +537,7 @@ public sealed class PreviewPanel : Panel
         // already-unchecked checkbox - but doing it in this order avoids it cleanly).
         _alignModeActive = false;
         _hoveredLineIndex = null;
+        _snappedPoint = null;
         Cursor = Cursors.Default;
         AlignModeExited?.Invoke();
         Invalidate();
@@ -493,6 +572,7 @@ public sealed class PreviewPanel : Panel
         {
             _screenLines = [];
             _keyPoints = [];
+            _labelRects = [];
             using var brush = new SolidBrush(Color.DimGray);
             g.DrawString("Select a report file to preview", Font, brush, new PointF(16, 16));
             return;
@@ -560,6 +640,7 @@ public sealed class PreviewPanel : Panel
         using var snappedTextBrush = new SolidBrush(Color.FromArgb(0, 120, 0));
         var newScreenLines = new List<(int Index, PointF Start, PointF End)>();
         var newKeyPoints = new List<(PointF Screen, double U, double V, string Name, int FeatureIndex)>();
+        var newLabelRects = new List<(RectangleF Bounds, int FeatureIndex)>();
 
         // When something is snapped, its label is bolded/coloured to stand out and every
         // other label is dimmed - otherwise labels use their normal colour/weight.
@@ -583,7 +664,10 @@ public sealed class PreviewPanel : Panel
                 newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name, index));
 
                 g.DrawLine(linePen, centre, end);
-                if ((_alignModeActive && index == _hoveredLineIndex) || _snappedPoint?.FeatureIndex == index)
+                // _snappedPoint already tracks the align-hovered line (see
+                // UpdateMouseTracking), so this one check covers both align-mode hover and
+                // ordinary key-point snapping.
+                if (_snappedPoint?.FeatureIndex == index)
                     g.DrawLine(highlightPen, centre, end);
 
                 g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
@@ -594,7 +678,9 @@ public sealed class PreviewPanel : Panel
                     var (labelFont, labelBrush) = LabelStyle(index);
                     var midX = (centre.X + end.X) / 2f;
                     var midY = (centre.Y + end.Y) / 2f;
-                    g.DrawString(p.Feature.Name, labelFont, labelBrush, midX + 4f, midY - 4f - Font.Height);
+                    var labelPos = new PointF(midX + 4f, midY - 4f - Font.Height);
+                    newLabelRects.Add((new RectangleF(labelPos, g.MeasureString(p.Feature.Name, labelFont)), index));
+                    g.DrawString(p.Feature.Name, labelFont, labelBrush, labelPos);
                 }
 
                 continue;
@@ -612,12 +698,15 @@ public sealed class PreviewPanel : Panel
             {
                 var (labelFont, labelBrush) = LabelStyle(index);
                 var offset = Math.Max(r * 0.08f, 4f);
-                g.DrawString(p.Feature.Name, labelFont, labelBrush, centre.X + offset, centre.Y - offset - Font.Height);
+                var labelPos = new PointF(centre.X + offset, centre.Y - offset - Font.Height);
+                newLabelRects.Add((new RectangleF(labelPos, g.MeasureString(p.Feature.Name, labelFont)), index));
+                g.DrawString(p.Feature.Name, labelFont, labelBrush, labelPos);
             }
         }
 
         _screenLines = newScreenLines;
         _keyPoints = newKeyPoints;
+        _labelRects = newLabelRects;
 
         if (_snappedPoint is { } snapped)
         {
