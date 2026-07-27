@@ -42,12 +42,12 @@ public sealed class PreviewPanel : Panel
     // travel. The view's own scale/centre are cached alongside for the same reason: OnPaint
     // recomputes them fresh from the current feature bounds every frame, and mouse-move needs
     // the exact same values to invert a screen point back to world coordinates.
-    private List<(PointF Screen, double U, double V, string Name)> _keyPoints = [];
+    private List<(PointF Screen, double U, double V, string Name, int FeatureIndex)> _keyPoints = [];
     private double _viewScale = 1.0;
     private double _viewCentreX;
     private double _viewCentreY;
     private (double U, double V)? _mouseWorldPoint;
-    private (double U, double V, string Name)? _snappedPoint;
+    private (double U, double V, string Name, int FeatureIndex)? _snappedPoint;
 
     private readonly System.Windows.Forms.Timer _animationTimer;
     private readonly Stopwatch _animationStopwatch = new();
@@ -355,7 +355,7 @@ public sealed class PreviewPanel : Panel
         var v = _viewCentreY - (location.Y - Height / 2.0) / _viewScale;
         _mouseWorldPoint = (u, v);
 
-        (double U, double V, string Name)? nearest = null;
+        (double U, double V, string Name, int FeatureIndex)? nearest = null;
         var bestDistance = float.MaxValue;
         foreach (var keyPoint in _keyPoints)
         {
@@ -365,7 +365,7 @@ public sealed class PreviewPanel : Panel
             if (distance < bestDistance)
             {
                 bestDistance = distance;
-                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name);
+                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name, keyPoint.FeatureIndex);
             }
         }
 
@@ -547,8 +547,20 @@ public sealed class PreviewPanel : Panel
         DrawAxes(g, ToScreen, axisPen, uLabel, vLabel);
 
         using var highlightPen = new Pen(Color.FromArgb(255, 140, 0), 3.2f);
+        using var boldLabelFont = new Font(Font, FontStyle.Bold);
+        using var dimmedTextBrush = new SolidBrush(Color.FromArgb(190, 190, 190));
+        using var snappedTextBrush = new SolidBrush(Color.FromArgb(0, 120, 0));
         var newScreenLines = new List<(int Index, PointF Start, PointF End)>();
-        var newKeyPoints = new List<(PointF Screen, double U, double V, string Name)>();
+        var newKeyPoints = new List<(PointF Screen, double U, double V, string Name, int FeatureIndex)>();
+
+        // When something is snapped, its label is bolded/coloured to stand out and every
+        // other label is dimmed - otherwise labels use their normal colour/weight.
+        (Font Font, Brush Brush) LabelStyle(int index) => _snappedPoint?.FeatureIndex switch
+        {
+            null => (Font, textBrush),
+            var snappedIndex when snappedIndex == index => (boldLabelFont, snappedTextBrush),
+            _ => (Font, dimmedTextBrush)
+        };
 
         for (var index = 0; index < projected.Count; index++)
         {
@@ -559,8 +571,8 @@ public sealed class PreviewPanel : Panel
             {
                 var end = ToScreen(p.U2!.Value, p.V2!.Value);
                 newScreenLines.Add((index, centre, end));
-                newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name));
-                newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name));
+                newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name, index));
+                newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name, index));
 
                 g.DrawLine(linePen, centre, end);
                 if (_alignModeActive && index == _hoveredLineIndex)
@@ -571,15 +583,16 @@ public sealed class PreviewPanel : Panel
 
                 if (_showText)
                 {
+                    var (labelFont, labelBrush) = LabelStyle(index);
                     var midX = (centre.X + end.X) / 2f;
                     var midY = (centre.Y + end.Y) / 2f;
-                    g.DrawString(p.Feature.Name, Font, textBrush, midX + 4f, midY - 4f - Font.Height);
+                    g.DrawString(p.Feature.Name, labelFont, labelBrush, midX + 4f, midY - 4f - Font.Height);
                 }
 
                 continue;
             }
 
-            newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name));
+            newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name, index));
 
             var r = ToScreenLength(p.Feature.Radius);
             g.DrawEllipse(circlePen, centre.X - r, centre.Y - r, r * 2, r * 2);
@@ -587,8 +600,9 @@ public sealed class PreviewPanel : Panel
 
             if (_showText)
             {
+                var (labelFont, labelBrush) = LabelStyle(index);
                 var offset = Math.Max(r * 0.08f, 4f);
-                g.DrawString(p.Feature.Name, Font, textBrush, centre.X + offset, centre.Y - offset - Font.Height);
+                g.DrawString(p.Feature.Name, labelFont, labelBrush, centre.X + offset, centre.Y - offset - Font.Height);
             }
         }
 
