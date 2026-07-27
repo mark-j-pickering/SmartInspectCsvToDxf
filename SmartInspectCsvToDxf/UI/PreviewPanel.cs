@@ -355,6 +355,14 @@ public sealed class PreviewPanel : Panel
         var v = _viewCentreY - (location.Y - Height / 2.0) / _viewScale;
         _mouseWorldPoint = (u, v);
 
+        // Align mode has its own line-hover/highlight interaction (see OnMouseMove) - key-
+        // point snapping and its label/geometry highlight would just visually compete with it.
+        if (_alignModeActive)
+        {
+            _snappedPoint = null;
+            return;
+        }
+
         (double U, double V, string Name, int FeatureIndex)? nearest = null;
         var bestDistance = float.MaxValue;
         foreach (var keyPoint in _keyPoints)
@@ -575,7 +583,7 @@ public sealed class PreviewPanel : Panel
                 newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name, index));
 
                 g.DrawLine(linePen, centre, end);
-                if (_alignModeActive && index == _hoveredLineIndex)
+                if ((_alignModeActive && index == _hoveredLineIndex) || _snappedPoint?.FeatureIndex == index)
                     g.DrawLine(highlightPen, centre, end);
 
                 g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
@@ -596,6 +604,8 @@ public sealed class PreviewPanel : Panel
 
             var r = ToScreenLength(p.Feature.Radius);
             g.DrawEllipse(circlePen, centre.X - r, centre.Y - r, r * 2, r * 2);
+            if (_snappedPoint?.FeatureIndex == index)
+                g.DrawEllipse(highlightPen, centre.X - r, centre.Y - r, r * 2, r * 2);
             g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
 
             if (_showText)
