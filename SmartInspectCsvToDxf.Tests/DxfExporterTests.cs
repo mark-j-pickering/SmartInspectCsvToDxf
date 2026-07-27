@@ -73,7 +73,7 @@ public sealed class DxfExporterTests : IDisposable
     [Fact]
     public void Export_MirrorsAboutYAxis_WhenRequested()
     {
-        var path = ExportTempDxf([Hole("hole1", 10, 20, radius: 5)], mirrorAboutYAxis: true);
+        var path = ExportTempDxf([Hole("hole1", 10, 20, radius: 5)], new PreviewOrientation(0, false, true));
 
         var doc = DxfDocument.Load(path);
 
@@ -87,9 +87,22 @@ public sealed class DxfExporterTests : IDisposable
     {
         var features = new List<Feature> { Hole("hole1", 10, 20, radius: 5) };
 
-        ExportTempDxf(features, mirrorAboutYAxis: true);
+        ExportTempDxf(features, new PreviewOrientation(0, false, true));
 
         Assert.Equal(10, features[0].X);
+    }
+
+    [Fact]
+    public void Export_AppliesRotationThenMirror_ForCombinedOrientation()
+    {
+        // Rotate right 90 first: (10, 20) -> (20, -10); then mirror about Y (negate X): (-20, -10).
+        var path = ExportTempDxf([Hole("hole1", 10, 20, radius: 5)], new PreviewOrientation(1, false, true));
+
+        var doc = DxfDocument.Load(path);
+
+        var circle = Assert.Single(doc.Entities.Circles);
+        Assert.Equal(-20, circle.Center.X);
+        Assert.Equal(-10, circle.Center.Y);
     }
 
     [Fact]
@@ -130,7 +143,7 @@ public sealed class DxfExporterTests : IDisposable
 
         var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.dxf");
         _tempFiles.Add(path);
-        DxfExporter.Export(path, features, mirrorAboutYAxis: false, drawingPlane: DrawingPlane.XZ);
+        DxfExporter.Export(path, features, PreviewOrientation.Identity, drawingPlane: DrawingPlane.XZ);
 
         var doc = DxfDocument.Load(path);
         var circle = Assert.Single(doc.Entities.Circles);
@@ -166,11 +179,11 @@ public sealed class DxfExporterTests : IDisposable
         Diameter = radius * 2
     };
 
-    private string ExportTempDxf(IEnumerable<Feature> features, bool mirrorAboutYAxis = false)
+    private string ExportTempDxf(IEnumerable<Feature> features, PreviewOrientation? orientation = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.dxf");
         _tempFiles.Add(path);
-        DxfExporter.Export(path, features, mirrorAboutYAxis);
+        DxfExporter.Export(path, features, orientation ?? PreviewOrientation.Identity);
         return path;
     }
 

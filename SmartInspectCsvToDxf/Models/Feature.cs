@@ -32,4 +32,54 @@ public sealed class Feature
             Z2 = Z2
         };
     }
+
+    public Feature WithMirrorX()
+    {
+        return new Feature
+        {
+            Name = Name,
+            X = X,
+            Y = -Y,
+            Z = Z,
+            Diameter = Diameter,
+            Radius = Radius,
+            X2 = X2,
+            Y2 = Y2.HasValue ? -Y2.Value : null,
+            Z2 = Z2
+        };
+    }
+
+    // Rotates X/Y by 90 degrees about Z (clockwise, in a standard Y-up axis
+    // convention); Z is elevation and is never touched by rotation.
+    public Feature WithRotatedRight90()
+    {
+        return new Feature
+        {
+            Name = Name,
+            X = Y,
+            Y = -X,
+            Z = Z,
+            Diameter = Diameter,
+            Radius = Radius,
+            X2 = Y2,
+            Y2 = X2.HasValue ? -X2.Value : null,
+            Z2 = Z2
+        };
+    }
+
+    public Feature WithRotatedLeft90()
+    {
+        return new Feature
+        {
+            Name = Name,
+            X = -Y,
+            Y = X,
+            Z = Z,
+            Diameter = Diameter,
+            Radius = Radius,
+            X2 = Y2.HasValue ? -Y2.Value : null,
+            Y2 = X2,
+            Z2 = Z2
+        };
+    }
 }

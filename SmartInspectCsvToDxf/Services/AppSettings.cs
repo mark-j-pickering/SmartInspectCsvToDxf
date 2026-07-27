@@ -7,7 +7,9 @@ public sealed class AppSettings
     public string InputFolder { get; set; } = string.Empty;
     public string OutputFolder { get; set; } = string.Empty;
     public string UsbFolder { get; set; } = string.Empty;
-    public bool MirrorAboutYAxis { get; set; }
+    public bool MirrorX { get; set; }
+    public bool MirrorY { get; set; }
+    public int RotationSteps { get; set; }
 
     private static string SettingsDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

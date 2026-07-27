@@ -17,6 +17,7 @@ public sealed partial class MainForm : Form
     private string? _currentReportPath;
     private string _savedInputFolder = string.Empty;
     private List<Feature> _currentFeatures = [];
+    private PreviewOrientation _orientation = PreviewOrientation.Identity;
 
     public MainForm()
     {
@@ -26,7 +27,10 @@ public sealed partial class MainForm : Form
         ApplyDefaultFoldersIfMissing();
         _updateService = new UpdateService(new UpdateDiagnosticLog());
 
-        _mirrorCheckBox.Checked = _settings.MirrorAboutYAxis;
+        _orientation = new PreviewOrientation(_settings.RotationSteps, _settings.MirrorX, _settings.MirrorY);
+        _mirrorXCheckBox.Checked = _settings.MirrorX;
+        _mirrorYCheckBox.Checked = _settings.MirrorY;
+        ApplyOrientationButtonIcons();
         _inputFolderTextBox.Text = _settings.InputFolder;
         _outputFolderTextBox.Text = _settings.OutputFolder;
         _usbFolderTextBox.Text = _settings.UsbFolder;
@@ -69,6 +73,26 @@ public sealed partial class MainForm : Form
         TryCreateDirectory(_settings.InputFolder);
         TryCreateDirectory(_settings.OutputFolder);
         _settings.Save();
+    }
+
+    private void ApplyOrientationButtonIcons()
+    {
+        const int iconSize = 22;
+
+        void SetIcon(ButtonBase button, Bitmap icon)
+        {
+            button.Image = icon;
+            button.ImageAlign = ContentAlignment.MiddleLeft;
+            button.TextAlign = ContentAlignment.MiddleRight;
+            button.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button.Padding = new Padding(6, 0, 4, 0);
+        }
+
+        SetIcon(_mirrorXCheckBox, ButtonIcons.MirrorX(iconSize));
+        SetIcon(_mirrorYCheckBox, ButtonIcons.MirrorY(iconSize));
+        SetIcon(_rotateLeftButton, ButtonIcons.RotateLeft(iconSize));
+        SetIcon(_rotateRightButton, ButtonIcons.RotateRight(iconSize));
+        SetIcon(_showTextCheckBox, ButtonIcons.ShowText(iconSize));
     }
 
     private static void TryCreateDirectory(string path)
@@ -167,8 +191,30 @@ public sealed partial class MainForm : Form
 
     private void RefreshButton_Click(object? sender, EventArgs e) => RefreshReportFileListPreserveSelection();
 
-    private void MirrorCheckBox_CheckedChanged(object? sender, EventArgs e)
+    private void MirrorXCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
+        _orientation = _orientation with { MirrorX = _mirrorXCheckBox.Checked };
+        RefreshPreview();
+        SaveSettings();
+    }
+
+    private void MirrorYCheckBox_CheckedChanged(object? sender, EventArgs e)
+    {
+        _orientation = _orientation with { MirrorY = _mirrorYCheckBox.Checked };
+        RefreshPreview();
+        SaveSettings();
+    }
+
+    private void RotateLeftButton_Click(object? sender, EventArgs e)
+    {
+        _orientation = _orientation.RotatedLeft();
+        RefreshPreview();
+        SaveSettings();
+    }
+
+    private void RotateRightButton_Click(object? sender, EventArgs e)
+    {
+        _orientation = _orientation.RotatedRight();
         RefreshPreview();
         SaveSettings();
     }
@@ -281,7 +327,9 @@ public sealed partial class MainForm : Form
         _settings.InputFolder = _inputFolderTextBox.Text.Trim();
         _settings.OutputFolder = _outputFolderTextBox.Text.Trim();
         _settings.UsbFolder = _usbFolderTextBox.Text.Trim();
-        _settings.MirrorAboutYAxis = _mirrorCheckBox.Checked;
+        _settings.MirrorX = _orientation.MirrorX;
+        _settings.MirrorY = _orientation.MirrorY;
+        _settings.RotationSteps = _orientation.RotationSteps;
 
         if (!_settings.Save())
         {
@@ -498,7 +546,7 @@ public sealed partial class MainForm : Form
         {
             _currentReportPath = null;
             _currentFeatures = [];
-            _previewPanel.SetFeatures([], _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
+            _previewPanel.SetFeatures([], _orientation, _showTextCheckBox.Checked);
             UpdateExportButtons();
             _statusLabel.Text = "Failed to load report";
             if (showErrors)
@@ -513,7 +561,7 @@ public sealed partial class MainForm : Form
 
     private void RefreshPreview()
     {
-        _previewPanel.SetFeatures(_currentFeatures, _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
+        _previewPanel.SetFeatures(_currentFeatures, _orientation, _showTextCheckBox.Checked);
     }
 
     private void UpdateExportButtons()
@@ -591,8 +639,8 @@ public sealed partial class MainForm : Form
                             ? _previewPanel.DrawingPlane
                             : null;
 
-                    var mirror = _mirrorCheckBox.Checked;
-                    await Task.Run(() => DxfExporter.Export(outputPath, features, mirror, plane));
+                    var orientation = _orientation;
+                    await Task.Run(() => DxfExporter.Export(outputPath, features, orientation, plane));
                     exported.Add(Path.GetFileName(outputPath));
                 }
                 catch (Exception ex)
@@ -648,8 +696,7 @@ public sealed partial class MainForm : Form
     private string BuildOutputPath(string folder, string reportPath)
     {
         var defaultName = Path.GetFileNameWithoutExtension(reportPath) ?? "features";
-        if (_mirrorCheckBox.Checked)
-            defaultName += "_mirrored_y";
+        defaultName += _orientation.FileNameSuffix();
 
         return Path.Combine(folder, defaultName + ".dxf");
     }

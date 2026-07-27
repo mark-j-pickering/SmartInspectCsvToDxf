@@ -55,7 +55,10 @@ partial class MainForm
         _exportUsbButton = new Button();
         _exportButton = new Button();
         _showTextCheckBox = new CheckBox();
-        _mirrorCheckBox = new CheckBox();
+        _mirrorXCheckBox = new CheckBox();
+        _mirrorYCheckBox = new CheckBox();
+        _rotateLeftButton = new Button();
+        _rotateRightButton = new Button();
         _statusStrip = new StatusStrip();
         _statusLabel = new ToolStripStatusLabel();
         _refreshTimer = new System.Windows.Forms.Timer(components);
@@ -289,8 +292,14 @@ partial class MainForm
         // 
         _bottomControlsPanel.Controls.Add(_exportUsbButton);
         _bottomControlsPanel.Controls.Add(_exportButton);
+        // Dock.Left controls are laid out with the *last*-added one closest to the true
+        // left edge, so this list is in reverse of the intended left-to-right visual
+        // order (Rotate Left, Rotate Right, Mirror X, Mirror Y, Show Text).
         _bottomControlsPanel.Controls.Add(_showTextCheckBox);
-        _bottomControlsPanel.Controls.Add(_mirrorCheckBox);
+        _bottomControlsPanel.Controls.Add(_mirrorYCheckBox);
+        _bottomControlsPanel.Controls.Add(_mirrorXCheckBox);
+        _bottomControlsPanel.Controls.Add(_rotateRightButton);
+        _bottomControlsPanel.Controls.Add(_rotateLeftButton);
         _bottomControlsPanel.Dock = DockStyle.Bottom;
         _bottomControlsPanel.Location = new Point(8, 595);
         _bottomControlsPanel.Name = "_bottomControlsPanel";
@@ -320,26 +329,59 @@ partial class MainForm
         _exportButton.Click += ExportButton_Click;
         // 
         // _showTextCheckBox
-        // 
+        //
+        _showTextCheckBox.Appearance = Appearance.Button;
         _showTextCheckBox.Checked = true;
         _showTextCheckBox.CheckState = CheckState.Checked;
         _showTextCheckBox.Dock = DockStyle.Left;
-        _showTextCheckBox.Location = new Point(165, 0);
+        _showTextCheckBox.Location = new Point(540, 0);
         _showTextCheckBox.Name = "_showTextCheckBox";
-        _showTextCheckBox.Size = new Size(100, 52);
+        _showTextCheckBox.Size = new Size(110, 52);
         _showTextCheckBox.TabIndex = 2;
         _showTextCheckBox.Text = "Show Text";
         _showTextCheckBox.CheckedChanged += ShowTextCheckBox_CheckedChanged;
-        // 
-        // _mirrorCheckBox
-        // 
-        _mirrorCheckBox.Dock = DockStyle.Left;
-        _mirrorCheckBox.Location = new Point(0, 0);
-        _mirrorCheckBox.Name = "_mirrorCheckBox";
-        _mirrorCheckBox.Size = new Size(165, 52);
-        _mirrorCheckBox.TabIndex = 3;
-        _mirrorCheckBox.Text = "Mirror about Y axis";
-        _mirrorCheckBox.CheckedChanged += MirrorCheckBox_CheckedChanged;
+        //
+        // _mirrorYCheckBox
+        //
+        _mirrorYCheckBox.Appearance = Appearance.Button;
+        _mirrorYCheckBox.Dock = DockStyle.Left;
+        _mirrorYCheckBox.Location = new Point(420, 0);
+        _mirrorYCheckBox.Name = "_mirrorYCheckBox";
+        _mirrorYCheckBox.Size = new Size(120, 52);
+        _mirrorYCheckBox.TabIndex = 3;
+        _mirrorYCheckBox.Text = "Mirror Y";
+        _mirrorYCheckBox.CheckedChanged += MirrorYCheckBox_CheckedChanged;
+        //
+        // _mirrorXCheckBox
+        //
+        _mirrorXCheckBox.Appearance = Appearance.Button;
+        _mirrorXCheckBox.Dock = DockStyle.Left;
+        _mirrorXCheckBox.Location = new Point(300, 0);
+        _mirrorXCheckBox.Name = "_mirrorXCheckBox";
+        _mirrorXCheckBox.Size = new Size(120, 52);
+        _mirrorXCheckBox.TabIndex = 4;
+        _mirrorXCheckBox.Text = "Mirror X";
+        _mirrorXCheckBox.CheckedChanged += MirrorXCheckBox_CheckedChanged;
+        //
+        // _rotateRightButton
+        //
+        _rotateRightButton.Dock = DockStyle.Left;
+        _rotateRightButton.Location = new Point(150, 0);
+        _rotateRightButton.Name = "_rotateRightButton";
+        _rotateRightButton.Size = new Size(150, 52);
+        _rotateRightButton.TabIndex = 5;
+        _rotateRightButton.Text = "Rotate Right 90°";
+        _rotateRightButton.Click += RotateRightButton_Click;
+        //
+        // _rotateLeftButton
+        //
+        _rotateLeftButton.Dock = DockStyle.Left;
+        _rotateLeftButton.Location = new Point(0, 0);
+        _rotateLeftButton.Name = "_rotateLeftButton";
+        _rotateLeftButton.Size = new Size(150, 52);
+        _rotateLeftButton.TabIndex = 6;
+        _rotateLeftButton.Text = "Rotate Left 90°";
+        _rotateLeftButton.Click += RotateLeftButton_Click;
         // 
         // _statusStrip
         // 
@@ -437,7 +479,10 @@ partial class MainForm
     private Panel _rightPanel;
     private PreviewPanel _previewPanel;
     private Panel _bottomControlsPanel;
-    private CheckBox _mirrorCheckBox;
+    private CheckBox _mirrorXCheckBox;
+    private CheckBox _mirrorYCheckBox;
+    private Button _rotateLeftButton;
+    private Button _rotateRightButton;
     private CheckBox _showTextCheckBox;
     private Button _exportButton;
     private Button _exportUsbButton;

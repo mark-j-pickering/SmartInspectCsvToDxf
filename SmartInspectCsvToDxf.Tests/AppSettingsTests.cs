@@ -28,7 +28,9 @@ public sealed class AppSettingsTests : IDisposable
             InputFolder = @"C:\Reports\In",
             OutputFolder = @"C:\Reports\Out",
             UsbFolder = @"D:\Usb",
-            MirrorAboutYAxis = true
+            MirrorX = true,
+            MirrorY = true,
+            RotationSteps = 2
         };
 
         Assert.True(settings.Save());
@@ -38,7 +40,9 @@ public sealed class AppSettingsTests : IDisposable
         Assert.Equal(settings.InputFolder, loaded.InputFolder);
         Assert.Equal(settings.OutputFolder, loaded.OutputFolder);
         Assert.Equal(settings.UsbFolder, loaded.UsbFolder);
-        Assert.Equal(settings.MirrorAboutYAxis, loaded.MirrorAboutYAxis);
+        Assert.Equal(settings.MirrorX, loaded.MirrorX);
+        Assert.Equal(settings.MirrorY, loaded.MirrorY);
+        Assert.Equal(settings.RotationSteps, loaded.RotationSteps);
     }
 
     [Fact]

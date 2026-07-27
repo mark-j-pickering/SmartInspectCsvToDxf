@@ -11,7 +11,7 @@ public sealed class PreviewPanel : Panel
 
     private List<Feature> _features = [];
     private object? _featuresSource;
-    private bool _mirrorAboutYAxis;
+    private PreviewOrientation _orientation = PreviewOrientation.Identity;
     private bool _showText = true;
     private DrawingPlane _drawingPlane = DrawingPlane.XY;
     private bool _planeOverridden;
@@ -36,12 +36,12 @@ public sealed class PreviewPanel : Panel
         return Image.FromStream(stream);
     }
 
-    public void SetFeatures(IEnumerable<Feature> features, bool mirrorAboutYAxis, bool showText)
+    public void SetFeatures(IEnumerable<Feature> features, PreviewOrientation orientation, bool showText)
     {
         // Only re-detect/reset the drawing plane when this is a genuinely new feature
         // set (a different report was loaded) - not on every call, since toggling the
-        // mirror/show-text checkboxes re-invokes this with the same underlying list and
-        // should leave a manual plane override in place.
+        // mirror/rotate/show-text controls re-invokes this with the same underlying list
+        // and should leave a manual plane override in place.
         if (!ReferenceEquals(features, _featuresSource))
         {
             _featuresSource = features;
@@ -50,7 +50,7 @@ public sealed class PreviewPanel : Panel
             _planeOverridden = false;
         }
 
-        _mirrorAboutYAxis = mirrorAboutYAxis;
+        _orientation = orientation;
         _showText = showText;
         Invalidate();
     }
@@ -119,7 +119,7 @@ public sealed class PreviewPanel : Panel
             return;
         }
 
-        var features = _mirrorAboutYAxis ? _features.Select(f => f.WithMirrorY()).ToList() : _features;
+        var features = _orientation.IsIdentity ? _features : _features.Select(_orientation.Apply).ToList();
         var projected = features
             .Select(f =>
             {
@@ -205,8 +205,9 @@ public sealed class PreviewPanel : Panel
         using var footerBrush = new SolidBrush(Color.DimGray);
         var planeSource = _planeOverridden ? "manual" : "auto";
         var footer = $"{features.Count} features | Plane {_drawingPlane} ({planeSource}, ↑↓←→ to change) | {uLabel} {minX:0.###} to {maxX:0.###} | {vLabel} {minY:0.###} to {maxY:0.###}";
-        if (_mirrorAboutYAxis)
-            footer += " | mirrored about Y axis";
+        var orientationDescription = _orientation.Describe();
+        if (orientationDescription.Length > 0)
+            footer += $" | {orientationDescription}";
         g.DrawString(footer, Font, footerBrush, new PointF(8, Height - Font.Height - 8));
     }
 
