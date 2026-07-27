@@ -323,14 +323,14 @@ public sealed partial class MainForm : Form
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithMirrorX()).ToList();
         _mirrorXCount++;
-        _previewPanel.AnimateMirror(mirrorX: true, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
+        _previewPanel.AnimateMirror(mirrorX: true, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked);
     }
 
     private void MirrorYButton_Click(object? sender, EventArgs e)
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithMirrorY()).ToList();
         _mirrorYCount++;
-        _previewPanel.AnimateMirror(mirrorX: false, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
+        _previewPanel.AnimateMirror(mirrorX: false, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked);
     }
 
     private void RotateLeftButton_Click(object? sender, EventArgs e)
@@ -341,14 +341,14 @@ public sealed partial class MainForm : Form
         // rotates raw X/Y, so the animation must match that regardless of which plane is
         // being viewed, or it'd visibly spin the wrong axis pair and then pop to the correct
         // final pose (Align below is different - it's already plane-aware).
-        _previewPanel.AnimateRotation(-90, DrawingPlane.XY, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
+        _previewPanel.AnimateRotation(-90, DrawingPlane.XY, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked);
     }
 
     private void RotateRightButton_Click(object? sender, EventArgs e)
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithRotatedRight90()).ToList();
         _rotateRightCount++;
-        _previewPanel.AnimateRotation(90, DrawingPlane.XY, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
+        _previewPanel.AnimateRotation(90, DrawingPlane.XY, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked);
     }
 
     private void ShowTextCheckBox_CheckedChanged(object? sender, EventArgs e) => RefreshPreview();
@@ -365,7 +365,7 @@ public sealed partial class MainForm : Form
     {
         _previewFeatures = _previewFeatures.Select(f => f.WithRotatedInPlane(angleDegrees, plane)).ToList();
         _lastAlign = (angleDegrees, plane);
-        _previewPanel.AnimateRotation(angleDegrees, plane, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
+        _previewPanel.AnimateRotation(angleDegrees, plane, _previewFeatures, _currentFeatures, _showTextCheckBox.Checked);
     }
 
     private void PreviewPanel_AlignModeExited()
@@ -376,8 +376,7 @@ public sealed partial class MainForm : Form
     // Set Origin is a display-only, single-shot pick just like Align: click the button, click
     // a key point in the preview, done. Unlike Mirror/Rotate/Align it never touches Feature
     // data - it only shifts where PreviewPanel draws its axes and reports coordinates - so
-    // there's no counter/description here to track, nothing added to BuildOrientationDescription
-    // or BuildFileNameSuffix, and it plays no part in HasActiveOrientation.
+    // there's no counter to track here, and it plays no part in HasActiveOrientation.
     private void SetOriginCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
         if (_setOriginCheckBox.Checked)
@@ -407,71 +406,6 @@ public sealed partial class MainForm : Form
         _rotateRightCount = 0;
         _rotateLeftCount = 0;
         _lastAlign = null;
-    }
-
-    // Purely informational summary of the counters above, shown in the preview footer.
-    private string BuildOrientationDescription()
-    {
-        var parts = new List<string>();
-
-        if (_rotateRightCount == 1)
-            parts.Add("rotated 90° CW");
-        else if (_rotateRightCount > 1)
-            parts.Add($"rotated 90° CW ×{_rotateRightCount}");
-
-        if (_rotateLeftCount == 1)
-            parts.Add("rotated 90° CCW");
-        else if (_rotateLeftCount > 1)
-            parts.Add($"rotated 90° CCW ×{_rotateLeftCount}");
-
-        if (_mirrorXCount == 1)
-            parts.Add("mirrored about X axis");
-        else if (_mirrorXCount > 1)
-            parts.Add($"mirrored about X axis ×{_mirrorXCount}");
-
-        if (_mirrorYCount == 1)
-            parts.Add("mirrored about Y axis");
-        else if (_mirrorYCount > 1)
-            parts.Add($"mirrored about Y axis ×{_mirrorYCount}");
-
-        if (_lastAlign is { } align)
-            parts.Add($"aligned {align.Angle:0.##}° ({align.Plane})");
-
-        return string.Join(", ", parts);
-    }
-
-    // Same counters, formatted as a filesystem-safe filename suffix for the exported DXF.
-    private string BuildFileNameSuffix()
-    {
-        var suffix = string.Empty;
-
-        if (_rotateRightCount == 1)
-            suffix += "_rotR90";
-        else if (_rotateRightCount > 1)
-            suffix += $"_rotR90x{_rotateRightCount}";
-
-        if (_rotateLeftCount == 1)
-            suffix += "_rotL90";
-        else if (_rotateLeftCount > 1)
-            suffix += $"_rotL90x{_rotateLeftCount}";
-
-        if (_mirrorXCount == 1)
-            suffix += "_mirrored_x";
-        else if (_mirrorXCount > 1)
-            suffix += $"_mirrored_xx{_mirrorXCount}";
-
-        if (_mirrorYCount == 1)
-            suffix += "_mirrored_y";
-        else if (_mirrorYCount > 1)
-            suffix += $"_mirrored_yx{_mirrorYCount}";
-
-        if (_lastAlign is { } align)
-        {
-            var sign = align.Angle < 0 ? "m" : string.Empty;
-            suffix += $"_aligned{sign}{Math.Abs(Math.Round(align.Angle)):0}";
-        }
-
-        return suffix;
     }
 
     private void ExportUsbButton_Click(object? sender, EventArgs e)
@@ -871,7 +805,7 @@ public sealed partial class MainForm : Form
 
     private void RefreshPreview()
     {
-        _previewPanel.SetFeatures(_previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
+        _previewPanel.SetFeatures(_previewFeatures, _currentFeatures, _showTextCheckBox.Checked);
     }
 
     private void UpdateExportButtons()
@@ -925,7 +859,7 @@ public sealed partial class MainForm : Form
                     // replay onto a different file's data, only the current result for this
                     // one).
                     var isPreviewedFile = string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase);
-                    var outputPath = BuildOutputPath(folder, item.FullPath, isPreviewedFile);
+                    var outputPath = BuildOutputPath(folder, item.FullPath);
                     if (File.Exists(outputPath))
                     {
                         var overwrite = CenteredMessageBox.Show(
@@ -1012,12 +946,9 @@ public sealed partial class MainForm : Form
             failures.Count == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
-    private string BuildOutputPath(string folder, string reportPath, bool includeOrientationSuffix)
+    private string BuildOutputPath(string folder, string reportPath)
     {
         var defaultName = Path.GetFileNameWithoutExtension(reportPath) ?? "features";
-        if (includeOrientationSuffix)
-            defaultName += BuildFileNameSuffix();
-
         return Path.Combine(folder, defaultName + ".dxf");
     }
 

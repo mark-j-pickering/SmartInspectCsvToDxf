@@ -24,7 +24,6 @@ public sealed class PreviewPanel : Panel
     // since it already recomputes the camera fit fresh from _features on every repaint.
     private List<Feature> _features = [];
     private object? _featuresSource;
-    private string _orientationDescription = string.Empty;
     private bool _showText = true;
     private DrawingPlane _drawingPlane = DrawingPlane.XY;
     private bool _planeOverridden;
@@ -166,7 +165,7 @@ public sealed class PreviewPanel : Panel
     // list), but changes when a genuinely different report is loaded. features itself
     // (what's actually drawn) is a *different* list instance on every click, since it's the
     // live, already-transformed result - so it can't be used for this "same file?" check.
-    public void SetFeatures(IEnumerable<Feature> features, object featuresIdentity, bool showText, string orientationDescription = "")
+    public void SetFeatures(IEnumerable<Feature> features, object featuresIdentity, bool showText)
     {
         // Cancel first: without this, toggling Show Labels / Reset / loading a different file
         // while a rotate/mirror animation is mid-flight would set _features correctly for an
@@ -200,7 +199,6 @@ public sealed class PreviewPanel : Panel
             _snappedPoint = null;
         }
 
-        _orientationDescription = orientationDescription;
         _showText = showText;
         Invalidate();
     }
@@ -213,19 +211,19 @@ public sealed class PreviewPanel : Panel
     // rotate raw X/Y, so animating against any other plane would visibly spin the wrong axis
     // pair for the animation's duration and then pop to the correct final pose. Align passes
     // its own picked plane through instead, since it's already plane-aware.
-    public void AnimateRotation(double angleDegrees, DrawingPlane plane, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription = "")
+    public void AnimateRotation(double angleDegrees, DrawingPlane plane, List<Feature> finalFeatures, object featuresIdentity, bool showText)
     {
         var fromFeatures = _features;
         StartAnimation(
             t => fromFeatures.Select(f => f.WithRotatedInPlane(angleDegrees * t, plane)).ToList(),
-            finalFeatures, featuresIdentity, showText, orientationDescription);
+            finalFeatures, featuresIdentity, showText);
     }
 
     // Animates a mirror as a "card flip": scales the mirrored axis from +1 through 0 to -1.
     // A literal reflection has no continuous in-plane family of matrices to interpolate
     // through (determinant -1 isn't reachable from identity via rotation alone), so this
     // squash-then-unsquash is the standard substitute.
-    public void AnimateMirror(bool mirrorX, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription = "")
+    public void AnimateMirror(bool mirrorX, List<Feature> finalFeatures, object featuresIdentity, bool showText)
     {
         var fromFeatures = _features;
         StartAnimation(
@@ -234,7 +232,7 @@ public sealed class PreviewPanel : Panel
                 var s = 1.0 - 2.0 * t; // Lerp(1, -1, t)
                 return fromFeatures.Select(f => mirrorX ? f.WithScaled(1, s) : f.WithScaled(s, 1)).ToList();
             },
-            finalFeatures, featuresIdentity, showText, orientationDescription);
+            finalFeatures, featuresIdentity, showText);
     }
 
     // Shared by AnimateRotation/AnimateMirror. If an animation is already running, this
@@ -243,7 +241,7 @@ public sealed class PreviewPanel : Panel
     // whatever _features currently displays (even a half-finished frame) as the fresh
     // starting point and restarts the clock toward the new target, rather than queuing or
     // ignoring the click.
-    private void StartAnimation(Func<double, List<Feature>> interpolator, List<Feature> finalFeatures, object featuresIdentity, bool showText, string orientationDescription)
+    private void StartAnimation(Func<double, List<Feature>> interpolator, List<Feature> finalFeatures, object featuresIdentity, bool showText)
     {
         if (_alignModeActive)
         {
@@ -265,7 +263,6 @@ public sealed class PreviewPanel : Panel
         _animationFinalFeatures = finalFeatures.ToList();
         _featuresSource = featuresIdentity;
         _showText = showText;
-        _orientationDescription = orientationDescription;
 
         _animationStopwatch.Restart();
         _animationTimer.Start(); // no-op if already running - this is the retarget path.
@@ -615,7 +612,9 @@ public sealed class PreviewPanel : Panel
     }
 
     // Implements the align pick: rotates the whole feature set so that the picked line
-    // becomes exactly horizontal in the current drawing plane.
+    // becomes exactly horizontal *or* vertical in the current drawing plane, whichever is
+    // the nearer orthogonal direction - not always horizontal regardless of how close the
+    // line already is to vertical.
     private void ConfirmAlign(int index)
     {
         // _features already holds the current, live-transformed state (MainForm mutates
@@ -629,19 +628,23 @@ public sealed class PreviewPanel : Panel
 
         var angleDeg = Math.Atan2(v2 - v1, u2 - u1) * 180.0 / Math.PI;
 
-        // Reduce mod 180 into (-90, 90] - a line has no inherent direction, so a segment
-        // pointing "backwards" should still be treated as already-horizontal, not needing a
-        // near-180-degree spin.
-        var normalized = angleDeg % 180.0;
-        if (normalized <= -90.0)
-            normalized += 180.0;
-        else if (normalized > 90.0)
-            normalized -= 180.0;
+        // Reduce mod 90 into (-45, 45] - a line has no inherent direction (so a segment
+        // pointing "backwards" is still just as horizontal/vertical), and unlike a mod-180
+        // reduction (which always targets horizontal, up to a near-90-degree spin for a
+        // near-vertical line), this picks whichever of horizontal or vertical is actually
+        // closer, capping the rotation at 45 degrees.
+        var normalized = angleDeg % 90.0;
+        if (normalized <= -45.0)
+            normalized += 90.0;
+        else if (normalized > 45.0)
+            normalized -= 90.0;
 
-        // Feature.WithRotatedInPlane's rotation formula solves to v' = 0 exactly when
-        // theta = atan2(v, u) - i.e. the required align angle is this normalized angle
-        // itself, not its negation (verified numerically: a 45-degree segment needs +45 fed
-        // into WithRotatedInPlane to land horizontal, not -45).
+        // Feature.WithRotatedInPlane's rotation formula solves to v' = 0 (horizontal) when
+        // theta = atan2(v, u), not its negation (verified numerically: a 45-degree segment
+        // needs +45 fed into WithRotatedInPlane to land horizontal, not -45); since a target
+        // 90 degrees away from that also satisfies u' = 0 (vertical) using the very same
+        // formula, feeding it this mod-90-reduced angle correctly lands on whichever of the
+        // two orthogonal directions is nearer.
         var requiredAlignAngle = normalized;
         var plane = _drawingPlane;
 
@@ -857,15 +860,33 @@ public sealed class PreviewPanel : Panel
         using var footerBrush = new SolidBrush(Color.DimGray);
         var planeSource = _planeOverridden ? "manual" : "auto";
         var footer = $"{_features.Count} features | Plane {_drawingPlane} ({planeSource}, ↑↓←→ to change) | {uLabel} {minX - originU:0.###} to {maxX - originU:0.###} | {vLabel} {minY - originV:0.###} to {maxY - originV:0.###}";
-        if (_orientationDescription.Length > 0)
-            footer += $" | {_orientationDescription}";
         if (_alignModeActive)
             footer += " | Align mode: click a line to level it (Esc to cancel)";
         if (_originPickModeActive)
             footer += " | Set origin: click a key point (Esc to cancel)";
 
         if (_snappedPoint is { } snap)
+        {
             footer += $" | Snapped to {snap.Name}: {uLabel}={snap.U - originU:0.###} {vLabel}={snap.V - originV:0.###}";
+
+            // Length/angle (for a line) or diameter (for a circle) of whichever feature is
+            // currently snapped - measured from the same projected U/V the preview actually
+            // draws, so it matches what's on screen rather than the feature's raw 3D data.
+            var snappedFeature = _features[snap.FeatureIndex];
+            if (snappedFeature.IsLine)
+            {
+                var line = projected[snap.FeatureIndex];
+                var du = line.U2!.Value - line.U;
+                var dv = line.V2!.Value - line.V;
+                var length = Math.Sqrt(du * du + dv * dv);
+                var angle = Math.Atan2(dv, du) * 180.0 / Math.PI;
+                footer += $" | Length={length:0.###} Angle={angle:0.##}°";
+            }
+            else
+            {
+                footer += $" | Diameter={snappedFeature.Diameter:0.###}";
+            }
+        }
         else if (_mouseWorldPoint is { } mouse)
             footer += $" | {uLabel}={mouse.U - originU:0.###} {vLabel}={mouse.V - originV:0.###}";
 

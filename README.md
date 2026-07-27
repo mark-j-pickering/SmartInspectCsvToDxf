@@ -70,10 +70,11 @@ The `.csv` format instead expects a literal `name,x,y,z,diameter,radius` header 
 - Configure a **USB folder** for one-click removable-drive export
 - Report file pane updates automatically when report files are added, deleted, renamed, or overwritten; each entry shows its last-modified date/time
 - Select a report file from the list to preview it — true-radius circles, centre marks, labels, line features, and axes for whichever plane (XY/XZ/YZ) best matches the part's geometry (auto-detected, or cycle manually with the arrow keys)
+- Hover the mouse over the preview to see live coordinates in the status bar; hovering (or snapping) near a feature also shows its length and angle (a line) or diameter (a circle)
 - Adjust the preview before exporting:
   - **Mirror X** / **Mirror Y** — flip the current view about that axis
   - **Rotate Left 90°** / **Rotate Right 90°**
-  - **Align** — click the button, then click a line feature in the preview to rotate the whole view so that line is exactly horizontal
+  - **Align** — click the button, then click a line feature in the preview to rotate the whole view so that line is exactly horizontal or vertical, whichever is closer to its current angle
   - **Set Origin** — click the button, then click a feature's centre (or a line endpoint) in the preview to redraw the axes through that point and report coordinates relative to it. Display-only: it never changes the underlying feature data or what gets exported.
   - **Reset** — discard all of the above (including a picked origin) and go back to the file's original orientation
   
