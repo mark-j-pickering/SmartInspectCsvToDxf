@@ -12,6 +12,7 @@ namespace SmartInspectCsvToDxf.UI;
 internal static class ButtonIcons
 {
     private static readonly Color IconColor = Color.FromArgb(25, 90, 160);
+    private static readonly Color ResetIconColor = Color.FromArgb(196, 44, 44);
 
     public static Bitmap MirrorX(int size = 24) => DrawMirror(size, vertical: true);
 
@@ -19,13 +20,17 @@ internal static class ButtonIcons
 
     public static Bitmap ShowText(int size = 24) => DrawShowText(size);
 
-    public static Bitmap RotateRight(int size = 24) => DrawRotateArc(size);
+    public static Bitmap RotateRight(int size = 24) => DrawArcArrow(size, 100f, 250f);
 
     public static Bitmap Align(int size = 24) => DrawAlign(size);
 
+    public static Bitmap SetOrigin(int size = 24) => DrawSetOrigin(size);
+
+    public static Bitmap Reset(int size = 24) => DrawReset(size);
+
     public static Bitmap RotateLeft(int size = 24)
     {
-        var bitmap = DrawRotateArc(size);
+        var bitmap = DrawArcArrow(size, 100f, 250f);
         bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
         return bitmap;
     }
@@ -89,7 +94,7 @@ internal static class ButtonIcons
         return bitmap;
     }
 
-    // A little label/tag with lines of text on it, for the Show Text toggle.
+    // A little label/tag with lines of text on it, for the Show Labels toggle.
     private static Bitmap DrawShowText(int size)
     {
         var bitmap = new Bitmap(size, size);
@@ -130,9 +135,10 @@ internal static class ButtonIcons
         return path;
     }
 
-    // Canonical clockwise arc with an arrowhead; RotateLeft() mirrors this bitmap
-    // horizontally rather than duplicating the geometry for a counter-clockwise sweep.
-    private static Bitmap DrawRotateArc(int size)
+    // Arc with an arrowhead at its sweep end; RotateLeft() mirrors the 250-degree version of
+    // this bitmap horizontally rather than duplicating the geometry for a counter-clockwise
+    // sweep.
+    private static Bitmap DrawArcArrow(int size, float startAngleDeg, float sweepDeg)
     {
         var bitmap = new Bitmap(size, size);
         using var g = Graphics.FromImage(bitmap);
@@ -143,9 +149,6 @@ internal static class ButtonIcons
         var rect = new RectangleF(margin, margin, size - 2 * margin, size - 2 * margin);
         var radius = rect.Width / 2f;
         var centre = new PointF(rect.X + radius, rect.Y + radius);
-
-        const float startAngleDeg = 100f;
-        const float sweepDeg = 250f;
 
         using var arcPen = new Pen(IconColor, Math.Max(1.8f, size / 11f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
         g.DrawArc(arcPen, rect, startAngleDeg, sweepDeg);
@@ -177,6 +180,60 @@ internal static class ButtonIcons
         return bitmap;
     }
 
+    // A wide, shallow counter-clockwise arc centred on straight-up, in its own red accent
+    // colour. Deliberately not built on DrawArcArrow like the Rotate icons above - Reset
+    // wants a much larger radius (a 120-degree sweep of a small circle reads as a tight
+    // loop; of a large one, as a flat arc), a thicker stroke, and a different colour, and
+    // routing all of that through the Rotate-tuned helper's defaults fought more than it saved.
+    private static Bitmap DrawReset(int size)
+    {
+        var bitmap = new Bitmap(size, size);
+        using var g = Graphics.FromImage(bitmap);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.Clear(Color.Transparent);
+
+        // Centre sits well below the icon, so only the top of this large circle - a flat,
+        // wide arc - actually falls within the icon's bounds.
+        var radius = size * 0.5f;
+        var centre = new PointF(size / 2f, size * 0.66f);
+        var rect = new RectangleF(centre.X - radius, centre.Y - radius, radius * 2, radius * 2);
+
+        // Centred on straight up (-90 degrees in GDI+'s screen-space angle convention) and
+        // swept counter-clockwise (negative sweep) so the two ends sit symmetrically left/
+        // right of top-centre, with the arrowhead landing on the left end.
+        const float startAngleDeg = -30f;
+        const float sweepDeg = -120f;
+
+        using var arcPen = new Pen(ResetIconColor, Math.Max(2.2f, size / 9f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+        g.DrawArc(arcPen, rect, startAngleDeg, sweepDeg);
+
+        var endAngleRad = (startAngleDeg + sweepDeg) * Math.PI / 180.0;
+        var tangentRad = endAngleRad - Math.PI / 2.0; // counter-clockwise direction of travel
+
+        var tip = new PointF(
+            (float)(centre.X + radius * Math.Cos(endAngleRad)),
+            (float)(centre.Y + radius * Math.Sin(endAngleRad)));
+
+        var headLength = size * 0.28f;
+        var headWidth = size * 0.28f;
+        var back = new PointF(
+            (float)(tip.X - headLength * Math.Cos(tangentRad)),
+            (float)(tip.Y - headLength * Math.Sin(tangentRad)));
+
+        var perpRad = tangentRad + Math.PI / 2.0;
+        var corner1 = new PointF(
+            (float)(back.X + headWidth / 2 * Math.Cos(perpRad)),
+            (float)(back.Y + headWidth / 2 * Math.Sin(perpRad)));
+        var corner2 = new PointF(
+            (float)(back.X - headWidth / 2 * Math.Cos(perpRad)),
+            (float)(back.Y - headWidth / 2 * Math.Sin(perpRad)));
+
+        using var brush = new SolidBrush(ResetIconColor);
+        g.FillPolygon(brush, new[] { tip, corner1, corner2 });
+
+        return bitmap;
+    }
+
     // A tilted line snapping down onto a dashed horizontal target line, for the Align
     // (pick-a-line-to-level) toggle.
     private static Bitmap DrawAlign(int size)
@@ -199,7 +256,7 @@ internal static class ButtonIcons
         g.DrawLine(diagonalPen, diagonalStart, diagonalEnd);
 
         // Small curved arrow bending from the diagonal's tip down onto the baseline,
-        // echoing the sweep-plus-arrowhead style used by DrawRotateArc.
+        // echoing the sweep-plus-arrowhead style used by DrawArcArrow.
         var arcRect = new RectangleF(size * 0.42f, size * 0.34f, size * 0.5f, size * 0.5f);
         const float startAngleDeg = 200f;
         const float sweepDeg = 120f;
@@ -234,5 +291,52 @@ internal static class ButtonIcons
         g.FillPolygon(brush, new[] { tip, corner1, corner2 });
 
         return bitmap;
+    }
+
+    // Two perpendicular arrowed axes meeting at a filled dot - the key point becoming the
+    // new (0,0), echoing the axes PreviewPanel itself draws through the picked origin.
+    private static Bitmap DrawSetOrigin(int size)
+    {
+        var bitmap = new Bitmap(size, size);
+        using var g = Graphics.FromImage(bitmap);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.Clear(Color.Transparent);
+
+        var margin = size * 0.16f;
+        var origin = new PointF(margin, size - margin);
+        var xEnd = new PointF(size - margin * 0.6f, size - margin);
+        var yEnd = new PointF(margin, margin * 0.6f);
+
+        using var axisPen = new Pen(IconColor, Math.Max(1.4f, size / 14f)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+        g.DrawLine(axisPen, origin, xEnd);
+        g.DrawLine(axisPen, origin, yEnd);
+
+        using var brush = new SolidBrush(IconColor);
+        var headLength = size * 0.22f;
+        var headWidth = size * 0.2f;
+        FillStraightArrowhead(g, brush, origin, xEnd, headLength, headWidth);
+        FillStraightArrowhead(g, brush, origin, yEnd, headLength, headWidth);
+
+        var dotRadius = size * 0.1f;
+        g.FillEllipse(brush, origin.X - dotRadius, origin.Y - dotRadius, dotRadius * 2, dotRadius * 2);
+
+        return bitmap;
+    }
+
+    // Arrowhead for a plain straight line (as opposed to DrawArcArrow's arc-tangent version).
+    private static void FillStraightArrowhead(Graphics g, Brush brush, PointF from, PointF to, float headLength, float headWidth)
+    {
+        var dx = to.X - from.X;
+        var dy = to.Y - from.Y;
+        var length = (float)Math.Sqrt(dx * dx + dy * dy);
+        if (length < 0.01f)
+            return;
+
+        var ux = dx / length;
+        var uy = dy / length;
+        var back = new PointF(to.X - ux * headLength, to.Y - uy * headLength);
+        var corner1 = new PointF(back.X - uy * headWidth / 2, back.Y + ux * headWidth / 2);
+        var corner2 = new PointF(back.X + uy * headWidth / 2, back.Y - ux * headWidth / 2);
+        g.FillPolygon(brush, new[] { to, corner1, corner2 });
     }
 }

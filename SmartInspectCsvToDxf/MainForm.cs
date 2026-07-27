@@ -52,6 +52,7 @@ public sealed partial class MainForm : Form
         ApplyOrientationButtonIcons();
         _previewPanel.LineAligned += PreviewPanel_LineAligned;
         _previewPanel.AlignModeExited += PreviewPanel_AlignModeExited;
+        _previewPanel.OriginPickModeExited += PreviewPanel_OriginPickModeExited;
         _inputFolderTextBox.Text = _settings.InputFolder;
         _outputFolderTextBox.Text = _settings.OutputFolder;
         _usbFolderTextBox.Text = _settings.UsbFolder;
@@ -137,18 +138,20 @@ public sealed partial class MainForm : Form
         void SetIcon(ButtonBase button, Bitmap icon)
         {
             button.Image = icon;
-            button.ImageAlign = ContentAlignment.MiddleLeft;
-            button.TextAlign = ContentAlignment.MiddleRight;
-            button.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button.Padding = new Padding(6, 0, 4, 0);
+            button.ImageAlign = ContentAlignment.TopCenter;
+            button.TextAlign = ContentAlignment.BottomCenter;
+            button.TextImageRelation = TextImageRelation.ImageAboveText;
+            button.Padding = new Padding(0, 4, 0, 0);
         }
 
+        SetIcon(_resetButton, ButtonIcons.Reset(iconSize));
         SetIcon(_mirrorXButton, ButtonIcons.MirrorX(iconSize));
         SetIcon(_mirrorYButton, ButtonIcons.MirrorY(iconSize));
         SetIcon(_rotateLeftButton, ButtonIcons.RotateLeft(iconSize));
         SetIcon(_rotateRightButton, ButtonIcons.RotateRight(iconSize));
         SetIcon(_showTextCheckBox, ButtonIcons.ShowText(iconSize));
         SetIcon(_alignModeCheckBox, ButtonIcons.Align(iconSize));
+        SetIcon(_setOriginCheckBox, ButtonIcons.SetOrigin(iconSize));
     }
 
     private static void TryCreateDirectory(string path)
@@ -352,6 +355,9 @@ public sealed partial class MainForm : Form
 
     private void AlignModeCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
+        if (_alignModeCheckBox.Checked)
+            _setOriginCheckBox.Checked = false; // mutually exclusive preview pick-modes
+
         _previewPanel.AlignModeActive = _alignModeCheckBox.Checked;
     }
 
@@ -367,9 +373,29 @@ public sealed partial class MainForm : Form
         _alignModeCheckBox.Checked = false;
     }
 
+    // Set Origin is a display-only, single-shot pick just like Align: click the button, click
+    // a key point in the preview, done. Unlike Mirror/Rotate/Align it never touches Feature
+    // data - it only shifts where PreviewPanel draws its axes and reports coordinates - so
+    // there's no counter/description here to track, nothing added to BuildOrientationDescription
+    // or BuildFileNameSuffix, and it plays no part in HasActiveOrientation.
+    private void SetOriginCheckBox_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (_setOriginCheckBox.Checked)
+            _alignModeCheckBox.Checked = false; // mutually exclusive preview pick-modes
+
+        _previewPanel.OriginPickModeActive = _setOriginCheckBox.Checked;
+    }
+
+    private void PreviewPanel_OriginPickModeExited()
+    {
+        _setOriginCheckBox.Checked = false;
+    }
+
     private void ResetButton_Click(object? sender, EventArgs e)
     {
         ResetOrientation();
+        _previewPanel.ResetOrigin();
+        _previewPanel.ResetPlane();
         RefreshPreview();
     }
 

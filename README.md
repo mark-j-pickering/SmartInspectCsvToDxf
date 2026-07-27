@@ -74,7 +74,8 @@ The `.csv` format instead expects a literal `name,x,y,z,diameter,radius` header 
   - **Mirror X** / **Mirror Y** — flip the current view about that axis
   - **Rotate Left 90°** / **Rotate Right 90°**
   - **Align** — click the button, then click a line feature in the preview to rotate the whole view so that line is exactly horizontal
-  - **Reset** — discard all of the above and go back to the file's original orientation
+  - **Set Origin** — click the button, then click a feature's centre (or a line endpoint) in the preview to redraw the axes through that point and report coordinates relative to it. Display-only: it never changes the underlying feature data or what gets exported.
+  - **Reset** — discard all of the above (including a picked origin) and go back to the file's original orientation
   
   Each of these is a one-shot action applied directly to what's currently displayed (there's no undo/redo) — selecting a different report file, or reselecting the current one, always starts fresh from the file's original data.
 - Export the selection to the configured DXF folder, or write it directly to the configured USB folder — multiple files can be selected for a batch export (only the file currently shown in the preview carries the rotate/mirror/align adjustment; every other file in the batch exports untouched)
