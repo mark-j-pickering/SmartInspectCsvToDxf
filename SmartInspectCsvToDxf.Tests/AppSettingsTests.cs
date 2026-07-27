@@ -28,7 +28,11 @@ public sealed class AppSettingsTests : IDisposable
             InputFolder = @"C:\Reports\In",
             OutputFolder = @"C:\Reports\Out",
             UsbFolder = @"D:\Usb",
-            MirrorAboutYAxis = true
+            WindowX = 100,
+            WindowY = 50,
+            WindowWidth = 1478,
+            WindowHeight = 1144,
+            WindowMaximized = true
         };
 
         Assert.True(settings.Save());
@@ -38,7 +42,24 @@ public sealed class AppSettingsTests : IDisposable
         Assert.Equal(settings.InputFolder, loaded.InputFolder);
         Assert.Equal(settings.OutputFolder, loaded.OutputFolder);
         Assert.Equal(settings.UsbFolder, loaded.UsbFolder);
-        Assert.Equal(settings.MirrorAboutYAxis, loaded.MirrorAboutYAxis);
+        Assert.Equal(settings.WindowX, loaded.WindowX);
+        Assert.Equal(settings.WindowY, loaded.WindowY);
+        Assert.Equal(settings.WindowWidth, loaded.WindowWidth);
+        Assert.Equal(settings.WindowHeight, loaded.WindowHeight);
+        Assert.Equal(settings.WindowMaximized, loaded.WindowMaximized);
+    }
+
+    [Fact]
+    public void Load_DefaultsWindowPositionToNull_WhenNeverSaved()
+    {
+        var settings = new AppSettings { InputFolder = @"C:\Reports\In" };
+
+        Assert.True(settings.Save());
+
+        var loaded = AppSettings.Load();
+
+        Assert.Null(loaded.WindowX);
+        Assert.Null(loaded.WindowY);
     }
 
     [Fact]

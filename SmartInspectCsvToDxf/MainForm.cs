@@ -10,13 +10,35 @@ public sealed partial class MainForm : Form
     private const int MinFileListWidth = 250;
     private const int FileListWidthPadding = 50;
     private const int MinPreviewWidth = 400;
+    private const int TimestampColumnGap = 24;
 
     private readonly AppSettings _settings;
     private readonly UpdateService _updateService;
     private readonly List<FileSystemWatcher> _watchers = [];
     private string? _currentReportPath;
     private string _savedInputFolder = string.Empty;
+
+    // _currentFeatures: raw, exactly as read from the currently loaded file - never mutated.
+    // _previewFeatures: the live, current state shown in the preview and exported for this
+    // file - a fresh list produced by whichever rotate/mirror/align transform was just
+    // clicked, applied directly to what was already there. There's no undo/redo and no
+    // "recipe" describing how to get from one to the other - each click is a one-shot,
+    // discrete edit of the current picture, not a replayable step to reapply elsewhere
+    // (batch-exporting other files uses their own untransformed data - see
+    // ExportDxfToConfiguredFolder). The counters below exist purely to build a short,
+    // human-readable summary for the footer/export filename, not to reconstruct anything.
     private List<Feature> _currentFeatures = [];
+    private List<Feature> _previewFeatures = [];
+    private int _mirrorXCount;
+    private int _mirrorYCount;
+    private int _rotateRightCount;
+    private int _rotateLeftCount;
+    private (double Angle, DrawingPlane Plane)? _lastAlign;
+
+    private bool _suppressSelectionChangedHandling;
+
+    private bool HasActiveOrientation =>
+        _mirrorXCount != 0 || _mirrorYCount != 0 || _rotateRightCount != 0 || _rotateLeftCount != 0 || _lastAlign is not null;
 
     public MainForm()
     {
@@ -24,9 +46,12 @@ public sealed partial class MainForm : Form
 
         _settings = AppSettings.Load();
         ApplyDefaultFoldersIfMissing();
+        ApplyWindowBoundsFromSettings();
         _updateService = new UpdateService(new UpdateDiagnosticLog());
 
-        _mirrorCheckBox.Checked = _settings.MirrorAboutYAxis;
+        ApplyOrientationButtonIcons();
+        _previewPanel.LineAligned += PreviewPanel_LineAligned;
+        _previewPanel.AlignModeExited += PreviewPanel_AlignModeExited;
         _inputFolderTextBox.Text = _settings.InputFolder;
         _outputFolderTextBox.Text = _settings.OutputFolder;
         _usbFolderTextBox.Text = _settings.UsbFolder;
@@ -69,6 +94,61 @@ public sealed partial class MainForm : Form
         TryCreateDirectory(_settings.InputFolder);
         TryCreateDirectory(_settings.OutputFolder);
         _settings.Save();
+    }
+
+    // Restores the previous session's window position/size/maximized state, if one was
+    // saved. Guarded against a saved position that's no longer reachable (e.g. the monitor
+    // it was on has since been disconnected or reconfigured) by requiring it to overlap at
+    // least one currently-connected screen - otherwise falls back to the Designer's default
+    // CenterScreen placement rather than opening off-screen where the user can't reach it.
+    private void ApplyWindowBoundsFromSettings()
+    {
+        if (_settings.WindowX.HasValue && _settings.WindowY.HasValue
+            && _settings.WindowWidth > 0 && _settings.WindowHeight > 0)
+        {
+            var bounds = new Rectangle(_settings.WindowX.Value, _settings.WindowY.Value, _settings.WindowWidth, _settings.WindowHeight);
+            if (Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(bounds)))
+            {
+                StartPosition = FormStartPosition.Manual;
+                Bounds = bounds;
+            }
+        }
+
+        if (_settings.WindowMaximized)
+            WindowState = FormWindowState.Maximized;
+    }
+
+    // FormStartPosition.CenterParent + Owner has proven unreliable in practice (observed
+    // landing at an unrelated cascade position instead of centering over this window,
+    // seemingly a WinForms quirk in wide/multi-monitor layouts) - computing the centered
+    // location directly against this form's own Bounds sidesteps whatever that issue is.
+    private void CenterOnMainForm(Form dialog)
+    {
+        dialog.StartPosition = FormStartPosition.Manual;
+        dialog.Location = new Point(
+            Location.X + (Width - dialog.Width) / 2,
+            Location.Y + (Height - dialog.Height) / 2);
+    }
+
+    private void ApplyOrientationButtonIcons()
+    {
+        const int iconSize = 22;
+
+        void SetIcon(ButtonBase button, Bitmap icon)
+        {
+            button.Image = icon;
+            button.ImageAlign = ContentAlignment.MiddleLeft;
+            button.TextAlign = ContentAlignment.MiddleRight;
+            button.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button.Padding = new Padding(6, 0, 4, 0);
+        }
+
+        SetIcon(_mirrorXButton, ButtonIcons.MirrorX(iconSize));
+        SetIcon(_mirrorYButton, ButtonIcons.MirrorY(iconSize));
+        SetIcon(_rotateLeftButton, ButtonIcons.RotateLeft(iconSize));
+        SetIcon(_rotateRightButton, ButtonIcons.RotateRight(iconSize));
+        SetIcon(_showTextCheckBox, ButtonIcons.ShowText(iconSize));
+        SetIcon(_alignModeCheckBox, ButtonIcons.Align(iconSize));
     }
 
     private static void TryCreateDirectory(string path)
@@ -161,19 +241,207 @@ public sealed partial class MainForm : Form
 
     private void FileListBox_SelectedIndexChanged(object? sender, EventArgs e)
     {
+        // Suppressed while SelectReportFile is restoring the previously-selected item after
+        // the list was rebuilt (Refresh, or the file-watcher's automatic list refresh) - that
+        // re-selection is just visual bookkeeping, not a user picking a (possibly different)
+        // file, so it must not cascade into a full reload/orientation reset. A genuine change
+        // of file (or the watcher noticing the current file itself changed) still goes
+        // through LoadSelectedReport/ReloadCurrentReportIfStillPresent explicitly elsewhere.
+        if (_suppressSelectionChangedHandling)
+            return;
+
         LoadSelectedReport();
         UpdateExportButtons();
     }
 
+    // A plain click on the item that's already the sole selection doesn't raise
+    // SelectedIndexChanged (the selected index doesn't actually change), so re-loading
+    // (and resetting orientation) on such a click needs to be triggered here instead.
+    // Comparing against _currentReportPath - which only changes once a load actually
+    // completes - rather than _fileListBox.SelectedIndices is deliberate: by the time this
+    // handler runs, the ListBox has already applied the click to its selection, so checking
+    // "is the clicked item now the sole selection" would be true for every plain click
+    // (including a normal click on a not-yet-selected file), double-firing alongside the
+    // SelectedIndexChanged this same click also raises.
+    private void FileListBox_MouseDown(object? sender, MouseEventArgs e)
+    {
+        if (ModifierKeys != Keys.None)
+            return;
+
+        var clickedIndex = _fileListBox.IndexFromPoint(e.Location);
+        if (clickedIndex < 0 || clickedIndex >= _fileListBox.Items.Count)
+            return;
+
+        if (_fileListBox.Items[clickedIndex] is ReportFileItem item
+            && string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase))
+        {
+            LoadSelectedReport();
+        }
+    }
+
     private void RefreshButton_Click(object? sender, EventArgs e) => RefreshReportFileListPreserveSelection();
 
-    private void MirrorCheckBox_CheckedChanged(object? sender, EventArgs e)
+    private static string FormatTimestamp(DateTime value) => value.ToString("g");
+
+    // Owner-drawn so the last-modified timestamp can sit right-justified on the same row as
+    // the file name, rather than as a second line or a separate column control.
+    private void FileListBox_DrawItem(object? sender, DrawItemEventArgs e)
     {
+        if (e.Index < 0 || e.Index >= _fileListBox.Items.Count)
+            return;
+
+        e.DrawBackground();
+
+        if (_fileListBox.Items[e.Index] is ReportFileItem item)
+        {
+            var isSelected = (e.State & DrawItemState.Selected) != 0;
+            var textColor = isSelected ? SystemColors.HighlightText : _fileListBox.ForeColor;
+            var timestampColor = isSelected ? SystemColors.HighlightText : Color.DimGray;
+            var timestampText = FormatTimestamp(item.LastWriteTime);
+            var timestampWidth = TextRenderer.MeasureText(e.Graphics, timestampText, e.Font).Width;
+
+            var timestampBounds = new Rectangle(e.Bounds.Right - timestampWidth - 4, e.Bounds.Top, timestampWidth, e.Bounds.Height);
+            var nameBounds = new Rectangle(e.Bounds.Left + 2, e.Bounds.Top, e.Bounds.Width - timestampWidth - 8, e.Bounds.Height);
+
+            TextRenderer.DrawText(e.Graphics, item.ToString(), e.Font, nameBounds, textColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            TextRenderer.DrawText(e.Graphics, timestampText, e.Font, timestampBounds, timestampColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+        }
+
+        e.DrawFocusRectangle();
+    }
+
+    // Mirror is a one-shot transform, not a persistent toggle - every click flips whatever's
+    // currently displayed about that axis, right now, rather than setting an "is mirrored"
+    // flag that gets reapplied fresh in some fixed order relative to rotate/align. There's
+    // no undo/redo, so there's nothing to replay either - each click directly transforms the
+    // live feature list once and that's the new current state.
+    private void MirrorXButton_Click(object? sender, EventArgs e)
+    {
+        _previewFeatures = _previewFeatures.Select(f => f.WithMirrorX()).ToList();
+        _mirrorXCount++;
         RefreshPreview();
-        SaveSettings();
+    }
+
+    private void MirrorYButton_Click(object? sender, EventArgs e)
+    {
+        _previewFeatures = _previewFeatures.Select(f => f.WithMirrorY()).ToList();
+        _mirrorYCount++;
+        RefreshPreview();
+    }
+
+    private void RotateLeftButton_Click(object? sender, EventArgs e)
+    {
+        _previewFeatures = _previewFeatures.Select(f => f.WithRotatedLeft90()).ToList();
+        _rotateLeftCount++;
+        RefreshPreview();
+    }
+
+    private void RotateRightButton_Click(object? sender, EventArgs e)
+    {
+        _previewFeatures = _previewFeatures.Select(f => f.WithRotatedRight90()).ToList();
+        _rotateRightCount++;
+        RefreshPreview();
     }
 
     private void ShowTextCheckBox_CheckedChanged(object? sender, EventArgs e) => RefreshPreview();
+
+    private void AlignModeCheckBox_CheckedChanged(object? sender, EventArgs e)
+    {
+        _previewPanel.AlignModeActive = _alignModeCheckBox.Checked;
+    }
+
+    private void PreviewPanel_LineAligned(double angleDegrees, DrawingPlane plane)
+    {
+        _previewFeatures = _previewFeatures.Select(f => f.WithRotatedInPlane(angleDegrees, plane)).ToList();
+        _lastAlign = (angleDegrees, plane);
+        RefreshPreview();
+    }
+
+    private void PreviewPanel_AlignModeExited()
+    {
+        _alignModeCheckBox.Checked = false;
+    }
+
+    private void ResetButton_Click(object? sender, EventArgs e)
+    {
+        ResetOrientation();
+        RefreshPreview();
+    }
+
+    private void ResetOrientation()
+    {
+        _previewFeatures = new List<Feature>(_currentFeatures);
+        _mirrorXCount = 0;
+        _mirrorYCount = 0;
+        _rotateRightCount = 0;
+        _rotateLeftCount = 0;
+        _lastAlign = null;
+    }
+
+    // Purely informational summary of the counters above, shown in the preview footer.
+    private string BuildOrientationDescription()
+    {
+        var parts = new List<string>();
+
+        if (_rotateRightCount == 1)
+            parts.Add("rotated 90° CW");
+        else if (_rotateRightCount > 1)
+            parts.Add($"rotated 90° CW ×{_rotateRightCount}");
+
+        if (_rotateLeftCount == 1)
+            parts.Add("rotated 90° CCW");
+        else if (_rotateLeftCount > 1)
+            parts.Add($"rotated 90° CCW ×{_rotateLeftCount}");
+
+        if (_mirrorXCount == 1)
+            parts.Add("mirrored about X axis");
+        else if (_mirrorXCount > 1)
+            parts.Add($"mirrored about X axis ×{_mirrorXCount}");
+
+        if (_mirrorYCount == 1)
+            parts.Add("mirrored about Y axis");
+        else if (_mirrorYCount > 1)
+            parts.Add($"mirrored about Y axis ×{_mirrorYCount}");
+
+        if (_lastAlign is { } align)
+            parts.Add($"aligned {align.Angle:0.##}° ({align.Plane})");
+
+        return string.Join(", ", parts);
+    }
+
+    // Same counters, formatted as a filesystem-safe filename suffix for the exported DXF.
+    private string BuildFileNameSuffix()
+    {
+        var suffix = string.Empty;
+
+        if (_rotateRightCount == 1)
+            suffix += "_rotR90";
+        else if (_rotateRightCount > 1)
+            suffix += $"_rotR90x{_rotateRightCount}";
+
+        if (_rotateLeftCount == 1)
+            suffix += "_rotL90";
+        else if (_rotateLeftCount > 1)
+            suffix += $"_rotL90x{_rotateLeftCount}";
+
+        if (_mirrorXCount == 1)
+            suffix += "_mirrored_x";
+        else if (_mirrorXCount > 1)
+            suffix += $"_mirrored_xx{_mirrorXCount}";
+
+        if (_mirrorYCount == 1)
+            suffix += "_mirrored_y";
+        else if (_mirrorYCount > 1)
+            suffix += $"_mirrored_yx{_mirrorYCount}";
+
+        if (_lastAlign is { } align)
+        {
+            var sign = align.Angle < 0 ? "m" : string.Empty;
+            suffix += $"_aligned{sign}{Math.Abs(Math.Round(align.Angle)):0}";
+        }
+
+        return suffix;
+    }
 
     private void ExportUsbButton_Click(object? sender, EventArgs e)
     {
@@ -281,7 +549,20 @@ public sealed partial class MainForm : Form
         _settings.InputFolder = _inputFolderTextBox.Text.Trim();
         _settings.OutputFolder = _outputFolderTextBox.Text.Trim();
         _settings.UsbFolder = _usbFolderTextBox.Text.Trim();
-        _settings.MirrorAboutYAxis = _mirrorCheckBox.Checked;
+
+        // RestoreBounds - not Bounds - when minimized/maximized: it holds the last normal
+        // (non-minimized/maximized) size and position, which is what should be reapplied on
+        // the next launch rather than the full-screen or taskbar-sized current bounds.
+        var windowBounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+        if (windowBounds is { Width: > 0, Height: > 0 })
+        {
+            _settings.WindowX = windowBounds.X;
+            _settings.WindowY = windowBounds.Y;
+            _settings.WindowWidth = windowBounds.Width;
+            _settings.WindowHeight = windowBounds.Height;
+        }
+
+        _settings.WindowMaximized = WindowState == FormWindowState.Maximized;
 
         if (!_settings.Save())
         {
@@ -403,9 +684,12 @@ public sealed partial class MainForm : Form
             {
                 foreach (var item in _fileListBox.Items)
                 {
-                    var size = TextRenderer.MeasureText(g, item?.ToString() ?? string.Empty, _fileListBox.Font);
-                    if (size.Width > maxTextWidth)
-                        maxTextWidth = size.Width;
+                    var width = TextRenderer.MeasureText(g, item?.ToString() ?? string.Empty, _fileListBox.Font).Width;
+                    if (item is ReportFileItem reportItem)
+                        width += TextRenderer.MeasureText(g, FormatTimestamp(reportItem.LastWriteTime), _fileListBox.Font).Width + TimestampColumnGap;
+
+                    if (width > maxTextWidth)
+                        maxTextWidth = width;
                 }
             }
 
@@ -435,7 +719,20 @@ public sealed partial class MainForm : Form
         {
             if (_fileListBox.Items[i] is ReportFileItem item && string.Equals(item.FullPath, fullPath, StringComparison.OrdinalIgnoreCase))
             {
-                _fileListBox.SelectedIndex = i;
+                // Just restoring visual selection after a list rebuild (see
+                // FileListBox_SelectedIndexChanged) - suppress the SelectedIndexChanged this
+                // assignment would otherwise raise, since nothing the user did actually
+                // changed which file is loaded.
+                _suppressSelectionChangedHandling = true;
+                try
+                {
+                    _fileListBox.SelectedIndex = i;
+                }
+                finally
+                {
+                    _suppressSelectionChangedHandling = false;
+                }
+
                 return;
             }
         }
@@ -447,7 +744,10 @@ public sealed partial class MainForm : Form
             return;
 
         // Explicit, user-driven selection: show a progress dialog and read off the UI
-        // thread, since PDF reports can take a moment to parse.
+        // thread, since PDF reports can take a moment to parse. LoadReportAsync resets any
+        // rotate/mirror/align state on success - selecting (or re-clicking) a file is a
+        // deliberate "start fresh with this file" action, not something to silently carry
+        // over from whatever was previously viewed.
         await LoadReportAsync(item.FullPath, showErrors: true, showProgress: true);
 
         // Move focus to the preview so the arrow keys immediately drive the drawing-
@@ -462,7 +762,24 @@ public sealed partial class MainForm : Form
         if (_currentReportPath is null || !File.Exists(_currentReportPath))
             return;
 
+        // The file changed on disk (SmartInspect re-exported it) while the user has an
+        // active rotate/mirror/align applied - reloading would silently discard that, so
+        // ask first. Nothing to lose (and nothing to ask about) when nothing's been applied.
+        if (HasActiveOrientation)
+        {
+            var reload = MessageBox.Show(
+                this,
+                "The report file has been modified. Do you want to reload it?\n\nDoing so will reset the rotation, mirror, and align settings.",
+                "Report file changed",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (reload != DialogResult.Yes)
+                return;
+        }
+
         // Automatic file-watcher reload: no progress dialog, matches prior silent behavior.
+        // LoadReportAsync resets rotate/mirror/align on success.
         await LoadReportAsync(_currentReportPath, showErrors: false, showProgress: false);
     }
 
@@ -471,9 +788,10 @@ public sealed partial class MainForm : Form
         ProgressDialog? progress = null;
         if (showProgress)
         {
-            progress = new ProgressDialog("Loading report", 1);
+            progress = new ProgressDialog("Loading report", 1) { Owner = this };
+            CenterOnMainForm(progress);
             progress.ReportProgress(1, 1, Path.GetFileName(path));
-            progress.Show(this);
+            progress.Show();
             // Give the dialog a moment to actually be seen - a small report reads fast
             // enough that it would otherwise flash and close before it's visible.
             await Task.Delay(500);
@@ -485,6 +803,7 @@ public sealed partial class MainForm : Form
             _currentFeatures = showProgress
                 ? await Task.Run(() => ReportFileReader.Read(path))
                 : ReportFileReader.Read(path);
+            ResetOrientation();
             RefreshPreview();
             UpdateExportButtons();
             _statusLabel.Text = $"Loaded {Path.GetFileName(path)} — {_currentFeatures.Count} features";
@@ -498,7 +817,8 @@ public sealed partial class MainForm : Form
         {
             _currentReportPath = null;
             _currentFeatures = [];
-            _previewPanel.SetFeatures([], _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
+            ResetOrientation();
+            RefreshPreview();
             UpdateExportButtons();
             _statusLabel.Text = "Failed to load report";
             if (showErrors)
@@ -513,7 +833,7 @@ public sealed partial class MainForm : Form
 
     private void RefreshPreview()
     {
-        _previewPanel.SetFeatures(_currentFeatures, _mirrorCheckBox.Checked, _showTextCheckBox.Checked);
+        _previewPanel.SetFeatures(_previewFeatures, _currentFeatures, _showTextCheckBox.Checked, BuildOrientationDescription());
     }
 
     private void UpdateExportButtons()
@@ -544,8 +864,9 @@ public sealed partial class MainForm : Form
         _exportButton.Enabled = false;
         _exportUsbButton.Enabled = false;
 
-        using var progress = new ProgressDialog("Exporting DXF", items.Count);
-        progress.Show(this);
+        using var progress = new ProgressDialog("Exporting DXF", items.Count) { Owner = this };
+        CenterOnMainForm(progress);
+        progress.Show();
         // Give the dialog a moment to actually be seen — a single small report reads and
         // exports fast enough that it would otherwise flash and close before it's visible.
         await Task.Delay(500);
@@ -559,7 +880,14 @@ public sealed partial class MainForm : Form
 
                 try
                 {
-                    var outputPath = BuildOutputPath(folder, item.FullPath);
+                    // Only the file currently shown in the preview carries the live rotate/
+                    // mirror/align edits - every other file in a batch export is written out
+                    // exactly as it exists on disk, untransformed (see the class-level field
+                    // comment on _previewFeatures for why: there's no reusable "recipe" to
+                    // replay onto a different file's data, only the current result for this
+                    // one).
+                    var isPreviewedFile = string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase);
+                    var outputPath = BuildOutputPath(folder, item.FullPath, isPreviewedFile);
                     if (File.Exists(outputPath))
                     {
                         var overwrite = MessageBox.Show(
@@ -576,7 +904,10 @@ public sealed partial class MainForm : Form
                         }
                     }
 
-                    var features = await Task.Run(() => ReportFileReader.Read(item.FullPath));
+                    var features = isPreviewedFile
+                        ? _previewFeatures
+                        : await Task.Run(() => ReportFileReader.Read(item.FullPath));
+
                     if (features.Count == 0)
                     {
                         failures.Add((fileName, "No valid features found"));
@@ -584,15 +915,13 @@ public sealed partial class MainForm : Form
                     }
 
                     // Only the file currently shown in the preview can have a manual plane
-                    // override attached to it; every other file in the batch (and this one,
-                    // if the plane is still auto-detected) gets its own auto-detected plane.
-                    DrawingPlane? plane = _previewPanel.IsPlaneOverridden
-                        && string.Equals(item.FullPath, _currentReportPath, StringComparison.OrdinalIgnoreCase)
-                            ? _previewPanel.DrawingPlane
-                            : null;
+                    // override attached to it; every other file in the batch gets its own
+                    // auto-detected plane.
+                    DrawingPlane? plane = isPreviewedFile && _previewPanel.IsPlaneOverridden
+                        ? _previewPanel.DrawingPlane
+                        : null;
 
-                    var mirror = _mirrorCheckBox.Checked;
-                    await Task.Run(() => DxfExporter.Export(outputPath, features, mirror, plane));
+                    await Task.Run(() => DxfExporter.Export(outputPath, features, plane));
                     exported.Add(Path.GetFileName(outputPath));
                 }
                 catch (Exception ex)
@@ -645,19 +974,25 @@ public sealed partial class MainForm : Form
             failures.Count == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
-    private string BuildOutputPath(string folder, string reportPath)
+    private string BuildOutputPath(string folder, string reportPath, bool includeOrientationSuffix)
     {
         var defaultName = Path.GetFileNameWithoutExtension(reportPath) ?? "features";
-        if (_mirrorCheckBox.Checked)
-            defaultName += "_mirrored_y";
+        if (includeOrientationSuffix)
+            defaultName += BuildFileNameSuffix();
 
         return Path.Combine(folder, defaultName + ".dxf");
     }
 
     private sealed class ReportFileItem
     {
-        public ReportFileItem(string fullPath) => FullPath = fullPath;
+        public ReportFileItem(string fullPath)
+        {
+            FullPath = fullPath;
+            LastWriteTime = File.GetLastWriteTime(fullPath);
+        }
+
         public string FullPath { get; }
+        public DateTime LastWriteTime { get; }
 
         public override string ToString()
         {

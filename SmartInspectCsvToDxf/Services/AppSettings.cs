@@ -2,12 +2,19 @@ using System.Text.Json;
 
 namespace SmartInspectCsvToDxf.Services;
 
+// Note: rotate/mirror/align adjustments are deliberately not persisted here - they're a
+// live, in-session editing action (there's no undo/redo either), always starting fresh from
+// the file's original data on every load, not a saved preference.
 public sealed class AppSettings
 {
     public string InputFolder { get; set; } = string.Empty;
     public string OutputFolder { get; set; } = string.Empty;
     public string UsbFolder { get; set; } = string.Empty;
-    public bool MirrorAboutYAxis { get; set; }
+    public int? WindowX { get; set; }
+    public int? WindowY { get; set; }
+    public int WindowWidth { get; set; }
+    public int WindowHeight { get; set; }
+    public bool WindowMaximized { get; set; }
 
     private static string SettingsDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

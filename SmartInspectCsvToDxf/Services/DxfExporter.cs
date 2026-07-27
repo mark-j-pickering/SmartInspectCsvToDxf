@@ -7,14 +7,16 @@ namespace SmartInspectCsvToDxf.Services;
 
 public static class DxfExporter
 {
+    // inputFeatures is exported exactly as given - any rotate/mirror/align adjustment is
+    // the caller's responsibility to have already applied (MainForm does this for whichever
+    // single file is currently shown in the preview; every other file in a batch export is
+    // passed through untransformed).
     // drawingPlane: null means auto-detect from this file's own features (same rule
     // PreviewPanel uses by default). Pass an explicit plane to honor a manual override
     // the user made in the preview for this specific file.
-    public static void Export(string outputPath, IEnumerable<Feature> inputFeatures, bool mirrorAboutYAxis, DrawingPlane? drawingPlane = null)
+    public static void Export(string outputPath, IEnumerable<Feature> inputFeatures, DrawingPlane? drawingPlane = null)
     {
-        var features = mirrorAboutYAxis
-            ? inputFeatures.Select(f => f.WithMirrorY()).ToList()
-            : inputFeatures.ToList();
+        var features = inputFeatures.ToList();
 
         var plane = drawingPlane ?? DrawingPlaneDetector.Detect(features);
 
