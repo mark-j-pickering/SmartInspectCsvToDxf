@@ -9,15 +9,56 @@ public sealed class PreviewPanel : Panel
     private static readonly Image EmbeddedBackgroundImage = LoadEmbeddedBackgroundImage();
     private static readonly DrawingPlane[] Planes = Enum.GetValues<DrawingPlane>();
 
+    private const float HitToleranceScreenPixels = 6f;
+
+    // The features drawn/hit-tested here are always already in their final, current state -
+    // MainForm mutates its own live feature list directly on every rotate/mirror/align click
+    // and hands the result straight through; this panel has no notion of "orientation" to
+    // apply, it just draws whatever it's given.
     private List<Feature> _features = [];
     private object? _featuresSource;
-    private PreviewOrientation _orientation = PreviewOrientation.Identity;
+    private string _orientationDescription = string.Empty;
     private bool _showText = true;
     private DrawingPlane _drawingPlane = DrawingPlane.XY;
     private bool _planeOverridden;
+    private bool _alignModeActive;
+    // Screen-space endpoints of every line feature, cached from the last OnPaint, keyed by
+    // index into _features rather than by Feature reference, since MainForm hands in a new
+    // list instance on every rotate/mirror/align click and reference equality would never
+    // match hover state across frames.
+    private List<(int Index, PointF Start, PointF End)> _screenLines = [];
+    private int? _hoveredLineIndex;
 
     public DrawingPlane DrawingPlane => _drawingPlane;
     public bool IsPlaneOverridden => _planeOverridden;
+
+    // MainForm sets this from the Align toggle button.
+    public bool AlignModeActive
+    {
+        get => _alignModeActive;
+        set
+        {
+            if (_alignModeActive == value)
+                return;
+
+            _alignModeActive = value;
+            if (!value)
+            {
+                _hoveredLineIndex = null;
+                Cursor = Cursors.Default;
+            }
+
+            Invalidate();
+        }
+    }
+
+    // Fired once, on a successful line pick, with the rotation angle/plane needed to level it.
+    public event Action<double, DrawingPlane>? LineAligned;
+
+    // Fired whenever align mode ends: a successful pick (after LineAligned), an Escape
+    // cancel, or a new report being loaded while align mode was still active - lets
+    // MainForm keep its toggle button's Checked state in sync.
+    public event Action? AlignModeExited;
 
     public PreviewPanel()
     {
@@ -36,21 +77,31 @@ public sealed class PreviewPanel : Panel
         return Image.FromStream(stream);
     }
 
-    public void SetFeatures(IEnumerable<Feature> features, PreviewOrientation orientation, bool showText)
+    // featuresIdentity: a token that stays the same reference across rotate/mirror/align
+    // clicks for the same file (MainForm passes its stable, never-reassigned raw feature
+    // list), but changes when a genuinely different report is loaded. features itself
+    // (what's actually drawn) is a *different* list instance on every click, since it's the
+    // live, already-transformed result - so it can't be used for this "same file?" check.
+    public void SetFeatures(IEnumerable<Feature> features, object featuresIdentity, bool showText, string orientationDescription = "")
     {
-        // Only re-detect/reset the drawing plane when this is a genuinely new feature
-        // set (a different report was loaded) - not on every call, since toggling the
-        // mirror/rotate/show-text controls re-invokes this with the same underlying list
-        // and should leave a manual plane override in place.
-        if (!ReferenceEquals(features, _featuresSource))
+        _features = features.ToList();
+
+        if (!ReferenceEquals(featuresIdentity, _featuresSource))
         {
-            _featuresSource = features;
-            _features = features.ToList();
+            _featuresSource = featuresIdentity;
             _drawingPlane = DrawingPlaneDetector.Detect(_features);
             _planeOverridden = false;
+
+            if (_alignModeActive)
+            {
+                _alignModeActive = false;
+                AlignModeExited?.Invoke();
+            }
+
+            _hoveredLineIndex = null;
         }
 
-        _orientation = orientation;
+        _orientationDescription = orientationDescription;
         _showText = showText;
         Invalidate();
     }
@@ -80,6 +131,17 @@ public sealed class PreviewPanel : Panel
                 CyclePlane(-1);
                 e.Handled = true;
                 break;
+            case Keys.Escape:
+                if (_alignModeActive)
+                {
+                    _alignModeActive = false;
+                    _hoveredLineIndex = null;
+                    Cursor = Cursors.Default;
+                    AlignModeExited?.Invoke();
+                    Invalidate();
+                    e.Handled = true;
+                }
+                break;
         }
     }
 
@@ -87,6 +149,126 @@ public sealed class PreviewPanel : Panel
     {
         base.OnMouseDown(e);
         Focus();
+
+        if (_alignModeActive && e.Button == MouseButtons.Left && _hoveredLineIndex is int index)
+            ConfirmAlign(index);
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        if (!_alignModeActive || _screenLines.Count == 0)
+        {
+            if (_hoveredLineIndex is not null)
+            {
+                _hoveredLineIndex = null;
+                Cursor = Cursors.Default;
+                Invalidate();
+            }
+
+            return;
+        }
+
+        var nearest = FindNearestLineIndex(e.Location);
+        if (nearest == _hoveredLineIndex)
+            return;
+
+        _hoveredLineIndex = nearest;
+        Cursor = nearest.HasValue ? Cursors.Hand : Cursors.Default;
+        Invalidate();
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+
+        if (_hoveredLineIndex is null)
+            return;
+
+        _hoveredLineIndex = null;
+        Cursor = Cursors.Default;
+        Invalidate();
+    }
+
+    private int? FindNearestLineIndex(Point location)
+    {
+        int? bestIndex = null;
+        var bestDistance = float.MaxValue;
+
+        foreach (var line in _screenLines)
+        {
+            var distance = DistanceToSegment(location, line.Start, line.End);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestIndex = line.Index;
+            }
+        }
+
+        return bestDistance <= HitToleranceScreenPixels ? bestIndex : null;
+    }
+
+    private static float DistanceToSegment(Point point, PointF start, PointF end)
+    {
+        var dx = end.X - start.X;
+        var dy = end.Y - start.Y;
+        var lengthSquared = dx * dx + dy * dy;
+
+        if (lengthSquared <= float.Epsilon)
+            return Distance(point, start);
+
+        var t = ((point.X - start.X) * dx + (point.Y - start.Y) * dy) / lengthSquared;
+        t = Math.Clamp(t, 0f, 1f);
+
+        var closest = new PointF(start.X + t * dx, start.Y + t * dy);
+        return Distance(point, closest);
+    }
+
+    private static float Distance(Point a, PointF b)
+    {
+        var dx = a.X - b.X;
+        var dy = a.Y - b.Y;
+        return (float)Math.Sqrt(dx * dx + dy * dy);
+    }
+
+    // Implements the align pick: rotates the whole feature set so that the picked line
+    // becomes exactly horizontal in the current drawing plane.
+    private void ConfirmAlign(int index)
+    {
+        // _features already holds the current, live-transformed state (MainForm mutates
+        // its own feature list directly on every click and hands the result straight
+        // through), so the required rotation is measured directly against it - no
+        // "orientation" object to apply first.
+        var oriented = _features[index];
+
+        var (u1, v1, _) = DrawingPlaneMapper.Project(oriented, _drawingPlane);
+        var (u2, v2, _) = DrawingPlaneMapper.Project(oriented.X2!.Value, oriented.Y2!.Value, oriented.Z2 ?? 0.0, _drawingPlane);
+
+        var angleDeg = Math.Atan2(v2 - v1, u2 - u1) * 180.0 / Math.PI;
+
+        // Reduce mod 180 into (-90, 90] - a line has no inherent direction, so a segment
+        // pointing "backwards" should still be treated as already-horizontal, not needing a
+        // near-180-degree spin.
+        var normalized = angleDeg % 180.0;
+        if (normalized <= -90.0)
+            normalized += 180.0;
+        else if (normalized > 90.0)
+            normalized -= 180.0;
+
+        // Feature.WithRotatedInPlane's rotation formula solves to v' = 0 exactly when
+        // theta = atan2(v, u) - i.e. the required align angle is this normalized angle
+        // itself, not its negation (verified numerically: a 45-degree segment needs +45 fed
+        // into WithRotatedInPlane to land horizontal, not -45).
+        var requiredAlignAngle = normalized;
+
+        LineAligned?.Invoke(requiredAlignAngle, _drawingPlane);
+
+        _alignModeActive = false;
+        _hoveredLineIndex = null;
+        Cursor = Cursors.Default;
+        AlignModeExited?.Invoke();
+        Invalidate();
     }
 
     private void CyclePlane(int direction)
@@ -114,13 +296,13 @@ public sealed class PreviewPanel : Panel
 
         if (_features.Count == 0)
         {
+            _screenLines = [];
             using var brush = new SolidBrush(Color.DimGray);
             g.DrawString("Select a report file to preview", Font, brush, new PointF(16, 16));
             return;
         }
 
-        var features = _orientation.IsIdentity ? _features : _features.Select(_orientation.Apply).ToList();
-        var projected = features
+        var projected = _features
             .Select(f =>
             {
                 var (u, v, _) = DrawingPlaneMapper.Project(f, _drawingPlane);
@@ -170,14 +352,23 @@ public sealed class PreviewPanel : Panel
         var (uLabel, vLabel) = DrawingPlaneMapper.AxisLabels(_drawingPlane);
         DrawAxes(g, ToScreen, axisPen, uLabel, vLabel);
 
-        foreach (var p in projected)
+        using var highlightPen = new Pen(Color.FromArgb(255, 140, 0), 3.2f);
+        var newScreenLines = new List<(int Index, PointF Start, PointF End)>();
+
+        for (var index = 0; index < projected.Count; index++)
         {
+            var p = projected[index];
             var centre = ToScreen(p.U, p.V);
 
             if (p.Feature.IsLine)
             {
                 var end = ToScreen(p.U2!.Value, p.V2!.Value);
+                newScreenLines.Add((index, centre, end));
+
                 g.DrawLine(linePen, centre, end);
+                if (_alignModeActive && index == _hoveredLineIndex)
+                    g.DrawLine(highlightPen, centre, end);
+
                 g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
                 g.FillEllipse(pointBrush, end.X - 2.2f, end.Y - 2.2f, 4.4f, 4.4f);
 
@@ -202,12 +393,15 @@ public sealed class PreviewPanel : Panel
             }
         }
 
+        _screenLines = newScreenLines;
+
         using var footerBrush = new SolidBrush(Color.DimGray);
         var planeSource = _planeOverridden ? "manual" : "auto";
-        var footer = $"{features.Count} features | Plane {_drawingPlane} ({planeSource}, ↑↓←→ to change) | {uLabel} {minX:0.###} to {maxX:0.###} | {vLabel} {minY:0.###} to {maxY:0.###}";
-        var orientationDescription = _orientation.Describe();
-        if (orientationDescription.Length > 0)
-            footer += $" | {orientationDescription}";
+        var footer = $"{_features.Count} features | Plane {_drawingPlane} ({planeSource}, ↑↓←→ to change) | {uLabel} {minX:0.###} to {maxX:0.###} | {vLabel} {minY:0.###} to {maxY:0.###}";
+        if (_orientationDescription.Length > 0)
+            footer += $" | {_orientationDescription}";
+        if (_alignModeActive)
+            footer += " | Align mode: click a line to level it (Esc to cancel)";
         g.DrawString(footer, Font, footerBrush, new PointF(8, Height - Font.Height - 8));
     }
 

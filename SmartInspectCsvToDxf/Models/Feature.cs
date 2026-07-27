@@ -82,4 +82,59 @@ public sealed class Feature
             Z2 = Z2
         };
     }
+
+    // Arbitrary-angle rotation about whichever axis the given drawing plane drops (Z for
+    // XY, Y for XZ, X for YZ), matching WithRotatedRight90's clockwise-positive convention
+    // (verified: at exactly 90 degrees this produces the same (x,y) -> (y,-x) mapping).
+    // Unlike WithRotatedRight90/WithRotatedLeft90 - which always rotate raw X/Y regardless
+    // of plane, a pre-existing limitation of the 90-degree-step buttons - this rotates only
+    // the two axes the active plane actually maps to, so it stays correct for reports whose
+    // flat face is XZ or YZ (e.g. holes drilled along an axis).
+    public Feature WithRotatedInPlane(double angleDegrees, DrawingPlane plane)
+    {
+        var radians = angleDegrees * Math.PI / 180.0;
+        var cos = Math.Cos(radians);
+        var sin = Math.Sin(radians);
+
+        (double U, double V) Rotate(double u, double v) => (u * cos + v * sin, -u * sin + v * cos);
+
+        var x = X;
+        var y = Y;
+        var z = Z;
+        double? x2 = X2;
+        double? y2 = Y2;
+        double? z2 = Z2;
+
+        switch (plane)
+        {
+            case DrawingPlane.XY:
+                (x, y) = Rotate(X, Y);
+                if (X2.HasValue && Y2.HasValue)
+                    (x2, y2) = Rotate(X2.Value, Y2.Value);
+                break;
+            case DrawingPlane.XZ:
+                (x, z) = Rotate(X, Z);
+                if (X2.HasValue && Z2.HasValue)
+                    (x2, z2) = Rotate(X2.Value, Z2.Value);
+                break;
+            case DrawingPlane.YZ:
+                (y, z) = Rotate(Y, Z);
+                if (Y2.HasValue && Z2.HasValue)
+                    (y2, z2) = Rotate(Y2.Value, Z2.Value);
+                break;
+        }
+
+        return new Feature
+        {
+            Name = Name,
+            X = x,
+            Y = y,
+            Z = z,
+            Diameter = Diameter,
+            Radius = Radius,
+            X2 = x2,
+            Y2 = y2,
+            Z2 = z2
+        };
+    }
 }

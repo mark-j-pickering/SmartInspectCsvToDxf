@@ -70,10 +70,14 @@ public sealed class DxfExporterTests : IDisposable
         Assert.Equal("FEATURE_LABELS", text.Layer.Name);
     }
 
+    // DxfExporter no longer applies any transform itself - it just writes out whatever
+    // Feature list it's given exactly as-is (rotate/mirror/align, if any, is applied by the
+    // caller beforehand via Feature.With*). These tests confirm Export is a faithful,
+    // non-mutating pass-through for features that have already been transformed.
     [Fact]
-    public void Export_MirrorsAboutYAxis_WhenRequested()
+    public void Export_WritesMirroredFeature_Exactly()
     {
-        var path = ExportTempDxf([Hole("hole1", 10, 20, radius: 5)], new PreviewOrientation(0, false, true));
+        var path = ExportTempDxf([Hole("hole1", 10, 20, radius: 5).WithMirrorY()]);
 
         var doc = DxfDocument.Load(path);
 
@@ -83,20 +87,22 @@ public sealed class DxfExporterTests : IDisposable
     }
 
     [Fact]
-    public void Export_DoesNotMutateOriginalFeatures_WhenMirroring()
+    public void Export_DoesNotMutateInputFeatures()
     {
-        var features = new List<Feature> { Hole("hole1", 10, 20, radius: 5) };
+        var feature = Hole("hole1", 10, 20, radius: 5).WithMirrorY();
+        var features = new List<Feature> { feature };
 
-        ExportTempDxf(features, new PreviewOrientation(0, false, true));
+        ExportTempDxf(features);
 
-        Assert.Equal(10, features[0].X);
+        Assert.Same(feature, features[0]);
     }
 
     [Fact]
-    public void Export_AppliesRotationThenMirror_ForCombinedOrientation()
+    public void Export_WritesRotatedAndMirroredFeature_Exactly()
     {
         // Rotate right 90 first: (10, 20) -> (20, -10); then mirror about Y (negate X): (-20, -10).
-        var path = ExportTempDxf([Hole("hole1", 10, 20, radius: 5)], new PreviewOrientation(1, false, true));
+        var feature = Hole("hole1", 10, 20, radius: 5).WithRotatedRight90().WithMirrorY();
+        var path = ExportTempDxf([feature]);
 
         var doc = DxfDocument.Load(path);
 
@@ -143,7 +149,7 @@ public sealed class DxfExporterTests : IDisposable
 
         var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.dxf");
         _tempFiles.Add(path);
-        DxfExporter.Export(path, features, PreviewOrientation.Identity, drawingPlane: DrawingPlane.XZ);
+        DxfExporter.Export(path, features, drawingPlane: DrawingPlane.XZ);
 
         var doc = DxfDocument.Load(path);
         var circle = Assert.Single(doc.Entities.Circles);
@@ -179,11 +185,11 @@ public sealed class DxfExporterTests : IDisposable
         Diameter = radius * 2
     };
 
-    private string ExportTempDxf(IEnumerable<Feature> features, PreviewOrientation? orientation = null)
+    private string ExportTempDxf(IEnumerable<Feature> features)
     {
         var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.dxf");
         _tempFiles.Add(path);
-        DxfExporter.Export(path, features, orientation ?? PreviewOrientation.Identity);
+        DxfExporter.Export(path, features);
         return path;
     }
 
