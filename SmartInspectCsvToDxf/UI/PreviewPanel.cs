@@ -11,6 +11,7 @@ public sealed class PreviewPanel : Panel
     private static readonly DrawingPlane[] Planes = Enum.GetValues<DrawingPlane>();
 
     private const float HitToleranceScreenPixels = 6f;
+    private const float SnapToleranceScreenPixels = 10f;
     private const int AnimationDurationMs = 1000;
     private const int AnimationIntervalMs = 10;
 
@@ -34,6 +35,19 @@ public sealed class PreviewPanel : Panel
     // match hover state across frames.
     private List<(int Index, PointF Start, PointF End)> _screenLines = [];
     private int? _hoveredLineIndex;
+
+    // Feature centres (and line endpoints) in both screen and world space, cached from the
+    // last OnPaint - reused on every mouse move to find the nearest key point to snap to,
+    // without recomputing the whole projection/camera-fit pass on every pixel of mouse
+    // travel. The view's own scale/centre are cached alongside for the same reason: OnPaint
+    // recomputes them fresh from the current feature bounds every frame, and mouse-move needs
+    // the exact same values to invert a screen point back to world coordinates.
+    private List<(PointF Screen, double U, double V, string Name)> _keyPoints = [];
+    private double _viewScale = 1.0;
+    private double _viewCentreX;
+    private double _viewCentreY;
+    private (double U, double V)? _mouseWorldPoint;
+    private (double U, double V, string Name)? _snappedPoint;
 
     private readonly System.Windows.Forms.Timer _animationTimer;
     private readonly Stopwatch _animationStopwatch = new();
@@ -281,24 +295,29 @@ public sealed class PreviewPanel : Panel
     {
         base.OnMouseMove(e);
 
+        UpdateMouseTracking(e.Location);
+
         if (!_alignModeActive || IsAnimating || _screenLines.Count == 0)
         {
             if (_hoveredLineIndex is not null)
             {
                 _hoveredLineIndex = null;
                 Cursor = Cursors.Default;
-                Invalidate();
             }
-
-            return;
+        }
+        else
+        {
+            var nearest = FindNearestLineIndex(e.Location);
+            if (nearest != _hoveredLineIndex)
+            {
+                _hoveredLineIndex = nearest;
+                Cursor = nearest.HasValue ? Cursors.Hand : Cursors.Default;
+            }
         }
 
-        var nearest = FindNearestLineIndex(e.Location);
-        if (nearest == _hoveredLineIndex)
-            return;
-
-        _hoveredLineIndex = nearest;
-        Cursor = nearest.HasValue ? Cursors.Hand : Cursors.Default;
+        // Unlike the hover-only paths above, the coordinate readout changes on every pixel of
+        // mouse travel, so this always repaints rather than only when something discrete
+        // (hovered line, snap target) changes.
         Invalidate();
     }
 
@@ -306,12 +325,51 @@ public sealed class PreviewPanel : Panel
     {
         base.OnMouseLeave(e);
 
+        _mouseWorldPoint = null;
+        _snappedPoint = null;
+
         if (_hoveredLineIndex is null)
+        {
+            Invalidate();
             return;
+        }
 
         _hoveredLineIndex = null;
         Cursor = Cursors.Default;
         Invalidate();
+    }
+
+    // Converts the mouse position to world coordinates using the view transform cached from
+    // the last OnPaint, then looks for the nearest key point (feature centre or line
+    // endpoint) within SnapToleranceScreenPixels to snap to.
+    private void UpdateMouseTracking(Point location)
+    {
+        if (_features.Count == 0)
+        {
+            _mouseWorldPoint = null;
+            _snappedPoint = null;
+            return;
+        }
+
+        var u = (location.X - Width / 2.0) / _viewScale + _viewCentreX;
+        var v = _viewCentreY - (location.Y - Height / 2.0) / _viewScale;
+        _mouseWorldPoint = (u, v);
+
+        (double U, double V, string Name)? nearest = null;
+        var bestDistance = float.MaxValue;
+        foreach (var keyPoint in _keyPoints)
+        {
+            var dx = location.X - keyPoint.Screen.X;
+            var dy = location.Y - keyPoint.Screen.Y;
+            var distance = MathF.Sqrt(dx * dx + dy * dy);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                nearest = (keyPoint.U, keyPoint.V, keyPoint.Name);
+            }
+        }
+
+        _snappedPoint = bestDistance <= SnapToleranceScreenPixels ? nearest : null;
     }
 
     private int? FindNearestLineIndex(Point location)
@@ -426,6 +484,7 @@ public sealed class PreviewPanel : Panel
         if (_features.Count == 0)
         {
             _screenLines = [];
+            _keyPoints = [];
             using var brush = new SolidBrush(Color.DimGray);
             g.DrawString("Select a report file to preview", Font, brush, new PointF(16, 16));
             return;
@@ -462,6 +521,12 @@ public sealed class PreviewPanel : Panel
         var drawHeight = Math.Max(Height - padding * 2, 1);
         var scale = Math.Min(drawWidth, drawHeight) / span;
 
+        // Cached so OnMouseMove can invert a screen point back to world coordinates without
+        // redoing this whole camera-fit computation on every pixel of mouse travel.
+        _viewScale = scale;
+        _viewCentreX = centreX;
+        _viewCentreY = centreY;
+
         PointF ToScreen(double x, double y)
         {
             var sx = (float)(Width / 2.0 + (x - centreX) * scale);
@@ -483,6 +548,7 @@ public sealed class PreviewPanel : Panel
 
         using var highlightPen = new Pen(Color.FromArgb(255, 140, 0), 3.2f);
         var newScreenLines = new List<(int Index, PointF Start, PointF End)>();
+        var newKeyPoints = new List<(PointF Screen, double U, double V, string Name)>();
 
         for (var index = 0; index < projected.Count; index++)
         {
@@ -493,6 +559,8 @@ public sealed class PreviewPanel : Panel
             {
                 var end = ToScreen(p.U2!.Value, p.V2!.Value);
                 newScreenLines.Add((index, centre, end));
+                newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name));
+                newKeyPoints.Add((end, p.U2.Value, p.V2.Value, p.Feature.Name));
 
                 g.DrawLine(linePen, centre, end);
                 if (_alignModeActive && index == _hoveredLineIndex)
@@ -511,6 +579,8 @@ public sealed class PreviewPanel : Panel
                 continue;
             }
 
+            newKeyPoints.Add((centre, p.U, p.V, p.Feature.Name));
+
             var r = ToScreenLength(p.Feature.Radius);
             g.DrawEllipse(circlePen, centre.X - r, centre.Y - r, r * 2, r * 2);
             g.FillEllipse(pointBrush, centre.X - 2.2f, centre.Y - 2.2f, 4.4f, 4.4f);
@@ -523,6 +593,17 @@ public sealed class PreviewPanel : Panel
         }
 
         _screenLines = newScreenLines;
+        _keyPoints = newKeyPoints;
+
+        if (_snappedPoint is { } snapped)
+        {
+            var snapScreen = ToScreen(snapped.U, snapped.V);
+            const float snapRadius = 5f;
+            using var snapBrush = new SolidBrush(Color.FromArgb(60, 200, 60));
+            using var snapPen = new Pen(Color.FromArgb(0, 130, 0), 1.5f);
+            g.FillEllipse(snapBrush, snapScreen.X - snapRadius, snapScreen.Y - snapRadius, snapRadius * 2, snapRadius * 2);
+            g.DrawEllipse(snapPen, snapScreen.X - snapRadius, snapScreen.Y - snapRadius, snapRadius * 2, snapRadius * 2);
+        }
 
         using var footerBrush = new SolidBrush(Color.DimGray);
         var planeSource = _planeOverridden ? "manual" : "auto";
@@ -531,6 +612,12 @@ public sealed class PreviewPanel : Panel
             footer += $" | {_orientationDescription}";
         if (_alignModeActive)
             footer += " | Align mode: click a line to level it (Esc to cancel)";
+
+        if (_snappedPoint is { } snap)
+            footer += $" | Snapped to {snap.Name}: {uLabel}={snap.U:0.###} {vLabel}={snap.V:0.###}";
+        else if (_mouseWorldPoint is { } mouse)
+            footer += $" | {uLabel}={mouse.U:0.###} {vLabel}={mouse.V:0.###}";
+
         g.DrawString(footer, Font, footerBrush, new PointF(8, Height - Font.Height - 8));
     }
 
