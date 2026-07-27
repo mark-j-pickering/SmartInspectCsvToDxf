@@ -94,7 +94,7 @@ public sealed class UpdateAvailableDialog : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show(
+            CenteredMessageBox.Show(
                 this,
                 $"The update could not be installed: {ex.Message}",
                 "Update failed",
