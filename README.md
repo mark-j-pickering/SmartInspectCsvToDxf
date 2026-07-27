@@ -68,30 +68,31 @@ The `.csv` format instead expects a literal `name,x,y,z,diameter,radius` header 
 - Configure a **Report folder**
 - Configure a default **DXF folder**
 - Configure a **USB folder** for one-click removable-drive export
-- Report file pane updates automatically when report files are added, deleted, renamed, or overwritten
-- Select a report file from the list
-- Preview true-radius circles, centre marks, labels and X/Y axes
-- Toggle **Mirror about Y axis**
-- Export selected report to the configured DXF folder
-- Write selected report directly to the configured USB folder
+- Report file pane updates automatically when report files are added, deleted, renamed, or overwritten; each entry shows its last-modified date/time
+- Select a report file from the list to preview it — true-radius circles, centre marks, labels, line features, and axes for whichever plane (XY/XZ/YZ) best matches the part's geometry (auto-detected, or cycle manually with the arrow keys)
+- Adjust the preview before exporting:
+  - **Mirror X** / **Mirror Y** — flip the current view about that axis
+  - **Rotate Left 90°** / **Rotate Right 90°**
+  - **Align** — click the button, then click a line feature in the preview to rotate the whole view so that line is exactly horizontal
+  - **Reset** — discard all of the above and go back to the file's original orientation
+  
+  Each of these is a one-shot action applied directly to what's currently displayed (there's no undo/redo) — selecting a different report file, or reselecting the current one, always starts fresh from the file's original data.
+- Export the selection to the configured DXF folder, or write it directly to the configured USB folder — multiple files can be selected for a batch export (only the file currently shown in the preview carries the rotate/mirror/align adjustment; every other file in the batch exports untouched)
 
-Mirror about Y axis applies:
-
-```csharp
-x = -x;
-```
-
-The app saves the configured folders and mirror setting to:
+The app saves the configured folders and window size/position to:
 
 ```text
 %APPDATA%\SmartInspectCsvToDxf\settings.json
 ```
+
+(Rotate/Mirror/Align adjustments are not saved here — they're a live, in-session editing action, not a persisted preference.)
 
 ## DXF layers
 
 - `FEATURE_CIRCLES`
 - `FEATURE_CENTRES`
 - `FEATURE_LABELS`
+- `FEATURE_LINES`
 
 ## Build
 

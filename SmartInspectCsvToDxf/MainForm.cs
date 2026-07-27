@@ -189,7 +189,7 @@ public sealed partial class MainForm : Form
                     ShowUpdateAvailableDialog(result);
                     break;
                 case UpdateCheckStatus.UpToDate:
-                    MessageBox.Show(
+                    CenteredMessageBox.Show(
                         this,
                         $"You're running the latest version (v{result.CurrentVersion}).",
                         "No updates available",
@@ -197,7 +197,7 @@ public sealed partial class MainForm : Form
                         MessageBoxIcon.Information);
                     break;
                 default:
-                    MessageBox.Show(
+                    CenteredMessageBox.Show(
                         this,
                         result.ErrorMessage ?? "The update check could not be completed.",
                         "Update check failed",
@@ -222,6 +222,7 @@ public sealed partial class MainForm : Form
     {
         var view = new UpdateInfoView(result.CurrentVersion, result.AvailableVersion!, result.UpdateInfo!);
         using var dialog = new UpdateAvailableDialog(_updateService, view);
+        CenterOnMainForm(dialog);
         dialog.ShowDialog(this);
     }
 
@@ -479,7 +480,7 @@ public sealed partial class MainForm : Form
             ? "No USB drive detected. Plug one in, or choose a folder manually with Browse."
             : "Multiple USB drives detected. Please choose the correct one manually with Browse.";
 
-        MessageBox.Show(this, message, "USB drive not detected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        CenteredMessageBox.Show(this, message, "USB drive not detected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         return null;
     }
 
@@ -568,7 +569,7 @@ public sealed partial class MainForm : Form
         {
             const string message = "Could not save settings — check permissions on %APPDATA%\\SmartInspectCsvToDxf";
             _statusLabel.Text = message;
-            MessageBox.Show(this, message, "Settings not saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            CenteredMessageBox.Show(this, message, "Settings not saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         _savedInputFolder = _settings.InputFolder;
@@ -767,7 +768,7 @@ public sealed partial class MainForm : Form
         // ask first. Nothing to lose (and nothing to ask about) when nothing's been applied.
         if (HasActiveOrientation)
         {
-            var reload = MessageBox.Show(
+            var reload = CenteredMessageBox.Show(
                 this,
                 "The report file has been modified. Do you want to reload it?\n\nDoing so will reset the rotation, mirror, and align settings.",
                 "Report file changed",
@@ -821,8 +822,15 @@ public sealed partial class MainForm : Form
             RefreshPreview();
             UpdateExportButtons();
             _statusLabel.Text = "Failed to load report";
+
+            // Close the progress dialog before showing the error, rather than leaving it
+            // open behind the error dialog until the finally block below runs.
+            progress?.Close();
+            progress?.Dispose();
+            progress = null;
+
             if (showErrors)
-                MessageBox.Show(this, ex.Message, "Report load error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CenteredMessageBox.Show(this, ex.Message, "Report load error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {
@@ -853,7 +861,7 @@ public sealed partial class MainForm : Form
 
         if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
         {
-            MessageBox.Show(this, $"Please configure a valid {targetName} folder first.", "Folder not configured", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            CenteredMessageBox.Show(this, $"Please configure a valid {targetName} folder first.", "Folder not configured", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -890,7 +898,7 @@ public sealed partial class MainForm : Form
                     var outputPath = BuildOutputPath(folder, item.FullPath, isPreviewedFile);
                     if (File.Exists(outputPath))
                     {
-                        var overwrite = MessageBox.Show(
+                        var overwrite = CenteredMessageBox.Show(
                             this,
                             $"{Path.GetFileName(outputPath)} already exists.\n\nDo you want to replace it?",
                             "Confirm Save As",
@@ -966,7 +974,7 @@ public sealed partial class MainForm : Form
                 summary.AppendLine($"{file}: {error}");
         }
 
-        MessageBox.Show(
+        CenteredMessageBox.Show(
             this,
             summary.ToString().TrimEnd(),
             failures.Count == 0 ? "Export complete" : "Export completed with errors",
