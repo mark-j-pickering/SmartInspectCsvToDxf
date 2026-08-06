@@ -6,7 +6,7 @@ namespace SmartInspectCsvToDxf.UI;
 
 public sealed class PreviewPanel : Panel
 {
-    private const string BackgroundResourceName = "SmartInspectCsvToDxf.Resources.BUM_logo_background.png";
+    private const string BackgroundResourceName = "SmartInspectCsvToDxf.Resources.vag_logo.png";
     private static readonly Image EmbeddedBackgroundImage = LoadEmbeddedBackgroundImage();
     private static readonly DrawingPlane[] Planes = Enum.GetValues<DrawingPlane>();
 

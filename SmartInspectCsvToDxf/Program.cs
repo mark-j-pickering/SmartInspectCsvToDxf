@@ -24,7 +24,7 @@ internal static class Program
         if (!createdNew)
         {
             MessageBox.Show(
-                "SmartInspectCsvToDxf is already running. Close the other window before opening a new one.",
+                "The VAG Inspector is already running. Close the other window before opening a new one.",
                 "Already running",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);

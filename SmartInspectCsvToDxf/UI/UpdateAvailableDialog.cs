@@ -33,7 +33,7 @@ public sealed class UpdateAvailableDialog : Form
         {
             Dock = DockStyle.Top,
             Height = 90,
-            Text = $"A new version of BUM SmartInspect Converter is available.{Environment.NewLine}{Environment.NewLine}" +
+            Text = $"A new version of The VAG Inspector is available.{Environment.NewLine}{Environment.NewLine}" +
                    $"Current version: {update.CurrentVersion}{Environment.NewLine}" +
                    $"Available version: {update.AvailableVersion}",
         };

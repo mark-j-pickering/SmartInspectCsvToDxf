@@ -479,7 +479,7 @@ partial class MainForm
         MinimumSize = new Size(980, 640);
         Name = "MainForm";
         StartPosition = FormStartPosition.CenterScreen;
-        Text = "SmartInspect CSV to DXF";
+        Text = "The VAG Inspector";
         _menuStrip.ResumeLayout(false);
         _menuStrip.PerformLayout();
         _topPanel.ResumeLayout(false);
