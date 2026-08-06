@@ -20,7 +20,7 @@ env:
   TEST_PROJECT: SmartInspectCsvToDxf.Tests/SmartInspectCsvToDxf.Tests.csproj
   PACK_ID: SmartInspectCsvToDxf
   MAIN_EXE: SmartInspectCsvToDxf.exe
-  PRODUCT_NAME: "BUM SmartInspect Converter"
+  PRODUCT_NAME: "The VAG Inspector"
   PUBLISH_DIR: publish
   PACKAGES_DIR: releases
   ARTIFACTS_DIR: artifacts

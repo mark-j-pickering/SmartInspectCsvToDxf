@@ -4,7 +4,7 @@ public sealed class AboutDialog : Form
 {
     public AboutDialog(string versionText)
     {
-        Text = "About BUM SmartInspect Converter";
+        Text = "About The VAG Inspector";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterParent;
         MinimizeBox = false;
@@ -17,7 +17,7 @@ public sealed class AboutDialog : Form
         {
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleCenter,
-            Text = "BUM SmartInspect Converter" + Environment.NewLine +
+            Text = "The VAG Inspector" + Environment.NewLine +
                    $"Version {versionText}" + Environment.NewLine + Environment.NewLine +
                    "Converts FARO CAM2 SmartInspect report exports to DXF.",
         };
